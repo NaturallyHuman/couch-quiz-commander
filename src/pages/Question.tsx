@@ -7,6 +7,7 @@ import { calculateScore } from '@/utils/scoring';
 import { Question as QuestionType, GameState } from '@/types/game';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { TVButton } from '@/components/TVButton';
+import { Flame, ArrowUp, ArrowDown, ArrowLeft, ArrowRight } from 'lucide-react';
 
 const QUESTION_TIME = 10;
 const QUESTIONS_PER_ROUND = 6;
@@ -219,116 +220,137 @@ const Question = () => {
 
   return (
     <>
-      <div className="flex min-h-screen flex-col items-center justify-center px-[8vw] py-6">
-        <div className="w-full max-w-[80vw]">
-          {/* Header */}
-          <div className="mb-4 flex items-center justify-between">
-            <div className="text-lg text-muted-foreground">
-              Question {currentIndex + 1} of {questions.length}
-            </div>
-            <div className="flex gap-8 text-lg">
-              <div>
-                Score: <span className="font-bold text-primary">{score}</span>
-              </div>
-              <div>
-                Streak: <span className="font-bold text-warning">{streak}</span>
-              </div>
-            </div>
+      <div className="flex min-h-screen flex-col px-[8vw] py-6">
+        {/* Top Status Bar */}
+        <div className="mb-12 flex items-center justify-between gap-8">
+          {/* Streak */}
+          <div className="flex items-center gap-3 text-2xl font-bold">
+            <Flame className="h-8 w-8 text-warning" />
+            <span>{streak}</span>
           </div>
 
-          {/* Timer */}
-          <div className="mb-4">
+          {/* Timer Progress Bar */}
+          <div className="flex-1">
             <TimerBar timeRemaining={timeRemaining} maxTime={QUESTION_TIME} />
           </div>
 
-          {/* Question */}
-          <div className="mb-6 rounded-3xl bg-card p-6 text-center">
-            <h2 className="mb-4 text-xl text-primary">{currentQuestion.category}</h2>
-            <h1 className="text-3xl font-bold leading-tight">{currentQuestion.text}</h1>
+          {/* Score */}
+          <div className="text-2xl font-bold">
+            {score}
           </div>
+        </div>
 
-          {/* D-pad Answer Layout */}
-          <div className="relative mx-auto mb-4 h-[45vh] w-full max-w-[75vw]">
-            {/* Top Answer (Up/A) */}
-            <div className="absolute left-1/2 top-0 w-[28vw] -translate-x-1/2">
-              <AnswerChoice
-                letter="A"
-                text={currentQuestion.choices[0]}
-                isSelected={selectedAnswer === 0}
-                isHighlighted={highlightedAnswer === 0}
-                feedbackState={
-                  feedbackState && selectedAnswer === 0
-                    ? feedbackState
-                    : feedbackState && 0 === currentQuestion.correctIndex
-                    ? 'correct'
-                    : null
-                }
-                onClick={() => handleAnswer(0 as AnswerDirection)}
-              />
-            </div>
+        {/* Content Area */}
+        <div className="flex flex-1 flex-col items-center justify-center">
+          <div className="w-full max-w-[85vw]">
+            {/* Category */}
+            <h2 className="mb-12 text-center text-2xl text-primary">
+              {currentQuestion.category}
+            </h2>
 
-            {/* Middle Row */}
-            <div className="absolute left-0 top-1/2 flex w-full -translate-y-1/2 items-center justify-between">
-              {/* Left Answer (Left/B) */}
-              <div className="w-[28vw]">
+            {/* Question */}
+            <h1 className="mb-16 text-center text-5xl font-bold leading-tight">
+              {currentQuestion.text}
+            </h1>
+
+            {/* D-pad Answer Layout */}
+            <div className="relative mx-auto h-[50vh] w-full max-w-[80vw]">
+              {/* Top Answer (Up/A) */}
+              <div className="absolute left-1/2 top-0 w-[30vw] -translate-x-1/2">
                 <AnswerChoice
-                  letter="B"
-                  text={currentQuestion.choices[1]}
-                  isSelected={selectedAnswer === 1}
-                  isHighlighted={highlightedAnswer === 1}
+                  letter="A"
+                  text={currentQuestion.choices[0]}
+                  isSelected={selectedAnswer === 0}
+                  isHighlighted={highlightedAnswer === 0}
                   feedbackState={
-                    feedbackState && selectedAnswer === 1
+                    feedbackState && selectedAnswer === 0
                       ? feedbackState
-                      : feedbackState && 1 === currentQuestion.correctIndex
+                      : feedbackState && 0 === currentQuestion.correctIndex
                       ? 'correct'
                       : null
                   }
-                  onClick={() => handleAnswer(1 as AnswerDirection)}
+                  onClick={() => handleAnswer(0 as AnswerDirection)}
                 />
               </div>
 
-              {/* Right Answer (Right/D) */}
-              <div className="w-[28vw]">
+              {/* Middle Row */}
+              <div className="absolute left-0 top-1/2 flex w-full -translate-y-1/2 items-center justify-between">
+                {/* Left Answer (Left/B) */}
+                <div className="w-[30vw]">
+                  <AnswerChoice
+                    letter="B"
+                    text={currentQuestion.choices[1]}
+                    isSelected={selectedAnswer === 1}
+                    isHighlighted={highlightedAnswer === 1}
+                    feedbackState={
+                      feedbackState && selectedAnswer === 1
+                        ? feedbackState
+                        : feedbackState && 1 === currentQuestion.correctIndex
+                        ? 'correct'
+                        : null
+                    }
+                    onClick={() => handleAnswer(1 as AnswerDirection)}
+                  />
+                </div>
+
+                {/* Center D-pad Visual */}
+                <div className="flex h-32 w-32 shrink-0 items-center justify-center">
+                  <div className="relative h-full w-full opacity-30">
+                    {/* D-pad shape */}
+                    <div className="absolute left-1/2 top-0 h-10 w-10 -translate-x-1/2 rounded-t-lg border-2 border-foreground/40 bg-background/10 flex items-center justify-center">
+                      <ArrowUp className="h-5 w-5" />
+                    </div>
+                    <div className="absolute left-0 top-1/2 h-10 w-10 -translate-y-1/2 rounded-l-lg border-2 border-foreground/40 bg-background/10 flex items-center justify-center">
+                      <ArrowLeft className="h-5 w-5" />
+                    </div>
+                    <div className="absolute right-0 top-1/2 h-10 w-10 -translate-y-1/2 rounded-r-lg border-2 border-foreground/40 bg-background/10 flex items-center justify-center">
+                      <ArrowRight className="h-5 w-5" />
+                    </div>
+                    <div className="absolute bottom-0 left-1/2 h-10 w-10 -translate-x-1/2 rounded-b-lg border-2 border-foreground/40 bg-background/10 flex items-center justify-center">
+                      <ArrowDown className="h-5 w-5" />
+                    </div>
+                    <div className="absolute left-1/2 top-1/2 h-6 w-6 -translate-x-1/2 -translate-y-1/2 rounded-full bg-background/20" />
+                  </div>
+                </div>
+
+                {/* Right Answer (Right/D) */}
+                <div className="w-[30vw]">
+                  <AnswerChoice
+                    letter="D"
+                    text={currentQuestion.choices[3]}
+                    isSelected={selectedAnswer === 3}
+                    isHighlighted={highlightedAnswer === 3}
+                    feedbackState={
+                      feedbackState && selectedAnswer === 3
+                        ? feedbackState
+                        : feedbackState && 3 === currentQuestion.correctIndex
+                        ? 'correct'
+                        : null
+                    }
+                    onClick={() => handleAnswer(3 as AnswerDirection)}
+                  />
+                </div>
+              </div>
+
+              {/* Bottom Answer (Down/C) */}
+              <div className="absolute bottom-0 left-1/2 w-[30vw] -translate-x-1/2">
                 <AnswerChoice
-                  letter="D"
-                  text={currentQuestion.choices[3]}
-                  isSelected={selectedAnswer === 3}
-                  isHighlighted={highlightedAnswer === 3}
+                  letter="C"
+                  text={currentQuestion.choices[2]}
+                  isSelected={selectedAnswer === 2}
+                  isHighlighted={highlightedAnswer === 2}
                   feedbackState={
-                    feedbackState && selectedAnswer === 3
+                    feedbackState && selectedAnswer === 2
                       ? feedbackState
-                      : feedbackState && 3 === currentQuestion.correctIndex
+                      : feedbackState && 2 === currentQuestion.correctIndex
                       ? 'correct'
                       : null
                   }
-                  onClick={() => handleAnswer(3 as AnswerDirection)}
+                  onClick={() => handleAnswer(2 as AnswerDirection)}
                 />
               </div>
             </div>
-
-            {/* Bottom Answer (Down/C) */}
-            <div className="absolute bottom-0 left-1/2 w-[28vw] -translate-x-1/2">
-              <AnswerChoice
-                letter="C"
-                text={currentQuestion.choices[2]}
-                isSelected={selectedAnswer === 2}
-                isHighlighted={highlightedAnswer === 2}
-                feedbackState={
-                  feedbackState && selectedAnswer === 2
-                    ? feedbackState
-                    : feedbackState && 2 === currentQuestion.correctIndex
-                    ? 'correct'
-                    : null
-                }
-                onClick={() => handleAnswer(2 as AnswerDirection)}
-              />
-            </div>
           </div>
-
-          {/* Instructions */}
-          <p className="text-center text-lg text-muted-foreground">
-            Use arrow keys to select your answer
-          </p>
         </div>
       </div>
 
