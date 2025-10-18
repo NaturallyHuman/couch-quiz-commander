@@ -84,10 +84,11 @@ All colors MUST be HSL.
     box-shadow: var(--shadow-focus);
   }
 
-  /* TV safe area - 90% of viewport with 5% margin on all sides */
+  /* TV safe area - 16:9 aspect ratio with 5% margin on all sides */
   #root {
-    width: 90vw;
-    height: 90vh;
+    aspect-ratio: 16 / 9;
+    width: min(90vw, calc(90vh * 16 / 9));
+    height: min(90vh, calc(90vw * 9 / 16));
     max-width: 90vw;
     max-height: 90vh;
     overflow: auto;

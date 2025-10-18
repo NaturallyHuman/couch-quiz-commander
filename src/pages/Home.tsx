@@ -77,19 +77,19 @@ const Home = () => {
   };
 
   return (
-    <div className="flex h-full w-full flex-col items-center justify-center px-[5%] py-[3%]">
+    <div className="flex h-full w-full flex-col items-center justify-center px-[5%] py-[2%]">
       <div className="text-center">
-        <h1 className="mb-2 text-6xl font-bold tracking-tight">
+        <h1 className="mb-2 text-5xl font-bold tracking-tight">
           <span className="bg-gradient-to-r from-primary via-purple-400 to-primary bg-clip-text text-transparent">
             Smarty Couch
           </span>
         </h1>
-        <p className="mb-16 text-xl text-muted-foreground">
+        <p className="mb-12 text-lg text-muted-foreground">
           The ultimate TV trivia experience
         </p>
 
         {!showModeSelect ? (
-          <div className="flex flex-col items-center gap-6">
+          <div className="flex flex-col items-center gap-5">
             <TVButton
               ref={playButtonRef}
               size="large"
@@ -111,7 +111,7 @@ const Home = () => {
             </TVButton>
           </div>
         ) : (
-          <div className="flex flex-col items-center gap-6">
+          <div className="flex flex-col items-center gap-5">
             <TVButton
               ref={soloButtonRef}
               size="large"
@@ -143,7 +143,7 @@ const Home = () => {
           </div>
         )}
 
-        <p className="mt-12 text-lg text-muted-foreground">
+        <p className="mt-10 text-base text-muted-foreground">
           Use arrow keys to navigate • Enter to select • Esc to go back
         </p>
       </div>

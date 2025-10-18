@@ -231,9 +231,9 @@ const Question = () => {
 
   return (
     <>
-      <div className="flex h-full w-full flex-col px-[5%] py-[3%]">
+      <div className="flex h-full w-full flex-col px-[5%] py-[2%]">
         {/* Top Status Bar - Timer Only */}
-        <div className="mb-[3%] flex items-center justify-center">
+        <div className="mb-[2%] flex items-center justify-center">
           <div className="w-full max-w-[60%]">
             <TimerBar timeRemaining={timeRemaining} maxTime={QUESTION_TIME} />
           </div>
@@ -243,17 +243,17 @@ const Question = () => {
         <div className="flex flex-1 flex-col items-center justify-center">
           <div className="w-full max-w-[85%]">
             {/* Category */}
-            <h2 className="mb-[3%] text-center text-2xl text-primary">
+            <h2 className="mb-[2%] text-center text-xl text-primary">
               {currentQuestion.category}
             </h2>
 
             {/* Question */}
-            <h1 className="mb-[4%] text-center text-4xl font-bold leading-tight">
+            <h1 className="mb-[3%] text-center text-3xl font-bold leading-tight">
               {currentQuestion.text}
             </h1>
 
             {/* D-pad Answer Layout */}
-            <div className="relative mx-auto h-[50%] w-full max-w-[80%]">
+            <div className="relative mx-auto h-[42%] w-full max-w-[80%]">
               {/* Top Answer (Up/A) */}
               <div className="absolute left-1/2 top-0 w-[30%] -translate-x-1/2">
                 <AnswerChoice
