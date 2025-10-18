@@ -226,54 +226,140 @@ const Question = () => {
 
   return (
     <>
-      <div className="flex min-h-screen flex-col p-8">
-        <div className="mb-8 flex items-center justify-between">
-          <div className="text-xl text-muted-foreground">
-            Question {currentIndex + 1} of {questions.length}
-          </div>
-          <div className="flex gap-8 text-xl">
-            <div>
-              Score: <span className="font-bold text-primary">{score}</span>
+      <div className="flex min-h-screen flex-col items-center justify-center p-8">
+        <div className="w-full max-w-5xl">
+          {/* Header */}
+          <div className="mb-8 flex items-center justify-between">
+            <div className="text-xl text-muted-foreground">
+              Question {currentIndex + 1} of {questions.length}
             </div>
-            <div>
-              Streak: <span className="font-bold text-warning">{streak}</span>
+            <div className="flex gap-8 text-xl">
+              <div>
+                Score: <span className="font-bold text-primary">{score}</span>
+              </div>
+              <div>
+                Streak: <span className="font-bold text-warning">{streak}</span>
+              </div>
             </div>
           </div>
-        </div>
 
-        <div className="mb-8">
-          <TimerBar timeRemaining={timeRemaining} maxTime={QUESTION_TIME} />
-        </div>
+          {/* Timer */}
+          <div className="mb-8">
+            <TimerBar timeRemaining={timeRemaining} maxTime={QUESTION_TIME} />
+          </div>
 
-        <div className="mb-12 flex-1">
-          <h2 className="mb-2 text-2xl text-primary">{currentQuestion.category}</h2>
-          <h1 className="text-[2.75rem] font-bold leading-tight">{currentQuestion.text}</h1>
-        </div>
+          {/* Question */}
+          <div className="mb-12 rounded-3xl bg-card p-12 text-center">
+            <h2 className="mb-4 text-2xl text-primary">{currentQuestion.category}</h2>
+            <h1 className="text-5xl font-bold leading-tight">{currentQuestion.text}</h1>
+          </div>
 
-        <div className="grid gap-4 md:grid-cols-2">
-          {currentQuestion.choices.map((choice, index) => (
-            <AnswerChoice
-              key={index}
-              letter={['A', 'B', 'C', 'D'][index] as 'A' | 'B' | 'C' | 'D'}
-              text={choice}
-              isSelected={selectedAnswer === index}
-              isHighlighted={highlightedAnswer === index}
-              feedbackState={
-                feedbackState && selectedAnswer === index
-                  ? feedbackState
-                  : feedbackState && index === currentQuestion.correctIndex
-                  ? 'correct'
-                  : null
-              }
-              onClick={() => {
-                if (highlightedAnswer === index) {
-                  handleAnswer(index as AnswerDirection);
-                } else {
-                  setHighlightedAnswer(index as AnswerDirection);
+          {/* D-pad Answer Layout */}
+          <div className="relative mx-auto mb-12 h-[500px] w-full max-w-4xl">
+            {/* Top Answer (Up/A) */}
+            <div className="absolute left-1/2 top-0 w-[380px] -translate-x-1/2">
+              <AnswerChoice
+                letter="A"
+                text={currentQuestion.choices[0]}
+                isSelected={selectedAnswer === 0}
+                isHighlighted={highlightedAnswer === 0}
+                feedbackState={
+                  feedbackState && selectedAnswer === 0
+                    ? feedbackState
+                    : feedbackState && 0 === currentQuestion.correctIndex
+                    ? 'correct'
+                    : null
                 }
-              }}
-            />
-          ))}
+                onClick={() => {
+                  if (highlightedAnswer === 0) {
+                    handleAnswer(0 as AnswerDirection);
+                  } else {
+                    setHighlightedAnswer(0 as AnswerDirection);
+                  }
+                }}
+              />
+            </div>
+
+            {/* Middle Row */}
+            <div className="absolute left-0 top-1/2 flex w-full -translate-y-1/2 items-center justify-between">
+              {/* Left Answer (Left/B) */}
+              <div className="w-[380px]">
+                <AnswerChoice
+                  letter="B"
+                  text={currentQuestion.choices[1]}
+                  isSelected={selectedAnswer === 1}
+                  isHighlighted={highlightedAnswer === 1}
+                  feedbackState={
+                    feedbackState && selectedAnswer === 1
+                      ? feedbackState
+                      : feedbackState && 1 === currentQuestion.correctIndex
+                      ? 'correct'
+                      : null
+                  }
+                  onClick={() => {
+                    if (highlightedAnswer === 1) {
+                      handleAnswer(1 as AnswerDirection);
+                    } else {
+                      setHighlightedAnswer(1 as AnswerDirection);
+                    }
+                  }}
+                />
+              </div>
+
+              {/* Right Answer (Right/D) */}
+              <div className="w-[380px]">
+                <AnswerChoice
+                  letter="D"
+                  text={currentQuestion.choices[3]}
+                  isSelected={selectedAnswer === 3}
+                  isHighlighted={highlightedAnswer === 3}
+                  feedbackState={
+                    feedbackState && selectedAnswer === 3
+                      ? feedbackState
+                      : feedbackState && 3 === currentQuestion.correctIndex
+                      ? 'correct'
+                      : null
+                  }
+                  onClick={() => {
+                    if (highlightedAnswer === 3) {
+                      handleAnswer(3 as AnswerDirection);
+                    } else {
+                      setHighlightedAnswer(3 as AnswerDirection);
+                    }
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* Bottom Answer (Down/C) */}
+            <div className="absolute bottom-0 left-1/2 w-[380px] -translate-x-1/2">
+              <AnswerChoice
+                letter="C"
+                text={currentQuestion.choices[2]}
+                isSelected={selectedAnswer === 2}
+                isHighlighted={highlightedAnswer === 2}
+                feedbackState={
+                  feedbackState && selectedAnswer === 2
+                    ? feedbackState
+                    : feedbackState && 2 === currentQuestion.correctIndex
+                    ? 'correct'
+                    : null
+                }
+                onClick={() => {
+                  if (highlightedAnswer === 2) {
+                    handleAnswer(2 as AnswerDirection);
+                  } else {
+                    setHighlightedAnswer(2 as AnswerDirection);
+                  }
+                }}
+              />
+            </div>
+          </div>
+
+          {/* Instructions */}
+          <p className="text-center text-lg text-muted-foreground">
+            Use arrow keys to select your answer
+          </p>
         </div>
       </div>
 
