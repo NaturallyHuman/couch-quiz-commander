@@ -182,15 +182,7 @@ const Question = () => {
       if (e.key in directionMap) {
         e.preventDefault();
         const direction = directionMap[e.key];
-        
-        if (highlightedAnswer === direction) {
-          handleAnswer(direction);
-        } else {
-          setHighlightedAnswer(direction);
-        }
-      } else if (e.key === 'Enter' && highlightedAnswer !== null) {
-        e.preventDefault();
-        handleAnswer(highlightedAnswer);
+        handleAnswer(direction);
       }
     };
 
@@ -271,13 +263,7 @@ const Question = () => {
                     ? 'correct'
                     : null
                 }
-                onClick={() => {
-                  if (highlightedAnswer === 0) {
-                    handleAnswer(0 as AnswerDirection);
-                  } else {
-                    setHighlightedAnswer(0 as AnswerDirection);
-                  }
-                }}
+                onClick={() => handleAnswer(0 as AnswerDirection)}
               />
             </div>
 
@@ -297,13 +283,7 @@ const Question = () => {
                       ? 'correct'
                       : null
                   }
-                  onClick={() => {
-                    if (highlightedAnswer === 1) {
-                      handleAnswer(1 as AnswerDirection);
-                    } else {
-                      setHighlightedAnswer(1 as AnswerDirection);
-                    }
-                  }}
+                  onClick={() => handleAnswer(1 as AnswerDirection)}
                 />
               </div>
 
@@ -321,13 +301,7 @@ const Question = () => {
                       ? 'correct'
                       : null
                   }
-                  onClick={() => {
-                    if (highlightedAnswer === 3) {
-                      handleAnswer(3 as AnswerDirection);
-                    } else {
-                      setHighlightedAnswer(3 as AnswerDirection);
-                    }
-                  }}
+                  onClick={() => handleAnswer(3 as AnswerDirection)}
                 />
               </div>
             </div>
@@ -346,13 +320,7 @@ const Question = () => {
                     ? 'correct'
                     : null
                 }
-                onClick={() => {
-                  if (highlightedAnswer === 2) {
-                    handleAnswer(2 as AnswerDirection);
-                  } else {
-                    setHighlightedAnswer(2 as AnswerDirection);
-                  }
-                }}
+                onClick={() => handleAnswer(2 as AnswerDirection)}
               />
             </div>
           </div>
