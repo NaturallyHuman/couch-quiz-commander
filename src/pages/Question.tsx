@@ -232,9 +232,9 @@ const Question = () => {
   return (
     <>
       <div className="flex h-full w-full flex-col px-[5%] py-[3%]">
-        {/* Top Status Bar - Timer in top left */}
+        {/* Top Status Bar - Timer full width */}
         <div className="mb-[2%] flex items-start">
-          <div className="w-full max-w-[50%]">
+          <div className="w-full">
             <TimerBar timeRemaining={timeRemaining} maxTime={QUESTION_TIME} />
           </div>
         </div>
