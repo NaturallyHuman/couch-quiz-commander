@@ -74,10 +74,6 @@ const RoundIntro = () => {
         >
           Start Round
         </TVButton>
-
-        <p className="mt-8 text-lg text-muted-foreground">
-          Use arrow keys for A/B/C/D • Enter to confirm • Esc to pause
-        </p>
       </div>
     </div>
   );
