@@ -260,7 +260,7 @@ const Question = () => {
             </h2>
 
             {/* Question */}
-            <h1 className="mb-16 text-center text-5xl font-bold leading-tight">
+            <h1 className="mb-16 text-center text-4xl font-bold leading-tight">
               {currentQuestion.text}
             </h1>
 
@@ -285,9 +285,9 @@ const Question = () => {
               </div>
 
               {/* Middle Row */}
-              <div className="absolute left-0 top-1/2 flex w-full -translate-y-1/2 items-center justify-between">
-                {/* Left Answer (Left/B) */}
-                <div className="w-[30vw]">
+              <div className="absolute left-0 top-1/2 flex w-full -translate-y-1/2 items-center justify-center gap-8">
+                {/* Left Answer (Left/B) - aligned right */}
+                <div className="w-[30vw] text-right">
                   <AnswerChoice
                     letter="B"
                     text={currentQuestion.choices[1]}
@@ -324,8 +324,8 @@ const Question = () => {
                   </div>
                 </div>
 
-                {/* Right Answer (Right/D) */}
-                <div className="w-[30vw]">
+                {/* Right Answer (Right/D) - aligned left */}
+                <div className="w-[30vw] text-left">
                   <AnswerChoice
                     letter="D"
                     text={currentQuestion.choices[3]}
