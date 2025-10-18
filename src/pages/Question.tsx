@@ -4,11 +4,12 @@ import { AnswerChoice } from '@/components/AnswerChoice';
 import { TimerBar } from '@/components/TimerBar';
 import { selectQuestions } from '@/utils/questionSelector';
 import { calculateScore } from '@/utils/scoring';
-import { Question as QuestionType } from '@/types/game';
+import { Question as QuestionType, GameState } from '@/types/game';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { TVButton } from '@/components/TVButton';
 
-const QUESTION_TIME = 15;
+const QUESTION_TIME = 10;
+const QUESTIONS_PER_ROUND = 6;
 const FEEDBACK_DELAY = 1200;
 
 type AnswerDirection = 0 | 1 | 2 | 3 | null;
@@ -16,7 +17,8 @@ type AnswerDirection = 0 | 1 | 2 | 3 | null;
 const Question = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const category = location.state?.category || 'All';
+  const gameState = location.state?.gameState as GameState;
+  const category = gameState?.category || 'All';
 
   const [questions, setQuestions] = useState<QuestionType[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -36,9 +38,17 @@ const Question = () => {
   const feedbackTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    const selected = selectQuestions(category, 10);
+    if (!gameState) {
+      navigate('/');
+      return;
+    }
+    const selected = selectQuestions(category, QUESTIONS_PER_ROUND);
     setQuestions(selected);
-  }, [category]);
+    setScore(gameState.currentRoundScore);
+    setStreak(gameState.currentStreak);
+    setMaxStreak(gameState.currentMaxStreak);
+    setCorrectCount(gameState.currentRoundCorrect);
+  }, [category, gameState]);
 
   const currentQuestion = questions[currentIndex];
 
@@ -109,15 +119,34 @@ const Question = () => {
 
   const moveToNext = () => {
     if (currentIndex >= questions.length - 1) {
+      if (!gameState) return;
+      
+      const currentPlayer = gameState.players[gameState.currentPlayer];
+      currentPlayer.totalScore += score;
+      currentPlayer.correctAnswers += correctCount;
+      currentPlayer.totalQuestions += questions.length;
+      currentPlayer.maxStreak = Math.max(currentPlayer.maxStreak, maxStreak);
+      currentPlayer.roundScores.push(score);
+
+      const updatedGameState: GameState = {
+        ...gameState,
+        players: [...gameState.players],
+        currentRoundScore: 0,
+        currentRoundCorrect: 0,
+        currentStreak: 0,
+        currentMaxStreak: 0,
+      };
+
       navigate('/results', {
         state: {
-          correctAnswers: correctCount + (feedbackState === 'correct' ? 1 : 0),
+          correctAnswers: correctCount,
           totalQuestions: questions.length,
           score: score,
           maxStreak,
           streakBonus,
           category,
           correctByCategory,
+          gameState: updatedGameState,
         },
       });
     } else {

@@ -7,19 +7,28 @@ export interface Question {
   correctIndex: number;
 }
 
-export type GameMode = 'solo' | 'teams';
+export type GameMode = 'solo' | 'two-player';
+
+export interface PlayerStats {
+  name: string;
+  totalScore: number;
+  correctAnswers: number;
+  totalQuestions: number;
+  maxStreak: number;
+  roundScores: number[];
+}
 
 export interface GameState {
   mode: GameMode;
   category: string;
-  questions: Question[];
-  currentQuestionIndex: number;
-  score: number;
-  correctAnswers: number;
-  streak: number;
-  maxStreak: number;
-  timeRemaining: number;
-  answers: (number | null)[];
+  currentRound: number;
+  totalRounds: number;
+  currentPlayer: number;
+  players: PlayerStats[];
+  currentRoundScore: number;
+  currentRoundCorrect: number;
+  currentStreak: number;
+  currentMaxStreak: number;
 }
 
 export interface RoundResult {
@@ -28,6 +37,14 @@ export interface RoundResult {
   score: number;
   maxStreak: number;
   streakBonus: number;
+}
+
+export interface Badge {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  condition: (stats: PlayerStats) => boolean;
 }
 
 export interface LifetimeStats {

@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { TVButton } from '@/components/TVButton';
 import { Trophy, Target, Zap, TrendingUp } from 'lucide-react';
 import { updateLifetimeStats } from '@/utils/lifetimeStats';
+import { GameState } from '@/types/game';
 
 const Results = () => {
   const navigate = useNavigate();
@@ -11,13 +12,16 @@ const Results = () => {
 
   const {
     correctAnswers = 0,
-    totalQuestions = 10,
+    totalQuestions = 6,
     score = 0,
     maxStreak = 0,
     streakBonus = 0,
     category = 'All',
     correctByCategory = {},
+    gameState,
   } = location.state || {};
+
+  const typedGameState = gameState as GameState | undefined;
 
   useEffect(() => {
     buttonRef.current?.focus();
@@ -30,17 +34,61 @@ const Results = () => {
     );
   }, []);
 
+  const handleContinue = () => {
+    if (!typedGameState) {
+      navigate('/stats');
+      return;
+    }
+
+    const isGameOver =
+      (typedGameState.mode === 'solo' && typedGameState.currentRound >= typedGameState.totalRounds) ||
+      (typedGameState.mode === 'two-player' && typedGameState.currentRound >= typedGameState.totalRounds);
+
+    if (isGameOver) {
+      navigate('/game-over', { state: { gameState: typedGameState } });
+    } else {
+      // Move to next round/player
+      let nextPlayer = typedGameState.currentPlayer;
+      let nextRound = typedGameState.currentRound;
+
+      if (typedGameState.mode === 'two-player') {
+        nextPlayer = (typedGameState.currentPlayer + 1) % typedGameState.players.length;
+        if (nextPlayer === 0) {
+          nextRound++;
+        }
+      } else {
+        nextRound++;
+      }
+
+      const updatedGameState: GameState = {
+        ...typedGameState,
+        currentRound: nextRound,
+        currentPlayer: nextPlayer,
+        currentRoundScore: 0,
+        currentRoundCorrect: 0,
+        currentStreak: 0,
+        currentMaxStreak: 0,
+      };
+
+      if (typedGameState.mode === 'two-player' && nextPlayer !== typedGameState.currentPlayer) {
+        navigate('/turn-transition', { state: { gameState: updatedGameState } });
+      } else {
+        navigate('/round-intro', { state: { gameState: updatedGameState } });
+      }
+    }
+  };
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Enter') {
         e.preventDefault();
-        navigate('/stats');
+        handleContinue();
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [navigate]);
+  }, [typedGameState]);
 
   const percentage = Math.round((correctAnswers / totalQuestions) * 100);
 
@@ -77,13 +125,23 @@ const Results = () => {
           <div className="text-7xl font-bold text-primary">{score.toLocaleString()}</div>
         </div>
 
+        <div className="mb-4 text-xl text-muted-foreground">
+          {typedGameState && (
+            <>Round {typedGameState.currentRound - (typedGameState.mode === 'two-player' && typedGameState.currentPlayer === 1 ? 0 : 1)} Complete!</>
+          )}
+        </div>
+
         <TVButton
           ref={buttonRef}
           size="large"
-          onClick={() => navigate('/stats')}
+          onClick={handleContinue}
           className="min-w-[300px]"
         >
-          View Lifetime Stats
+          {typedGameState &&
+          ((typedGameState.mode === 'solo' && typedGameState.currentRound >= typedGameState.totalRounds) ||
+            (typedGameState.mode === 'two-player' && typedGameState.currentRound >= typedGameState.totalRounds))
+            ? 'View Final Results'
+            : 'Continue'}
         </TVButton>
       </div>
     </div>

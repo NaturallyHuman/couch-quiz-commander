@@ -1,7 +1,7 @@
 import { Question } from '@/types/game';
 import questionsData from '@/data/questions.json';
 
-export const selectQuestions = (category: string, count: number = 10): Question[] => {
+export const selectQuestions = (category: string, count: number = 6): Question[] => {
   const allQuestions = questionsData as Question[];
   
   // Filter by category if not "All"

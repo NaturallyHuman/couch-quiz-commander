@@ -10,6 +10,8 @@ import Question from "./pages/Question";
 import Results from "./pages/Results";
 import Stats from "./pages/Stats";
 import HighScore from "./pages/HighScore";
+import TurnTransition from "./pages/TurnTransition";
+import GameOver from "./pages/GameOver";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -26,6 +28,8 @@ const App = () => (
           <Route path="/round-intro" element={<RoundIntro />} />
           <Route path="/question" element={<Question />} />
           <Route path="/results" element={<Results />} />
+          <Route path="/turn-transition" element={<TurnTransition />} />
+          <Route path="/game-over" element={<GameOver />} />
           <Route path="/stats" element={<Stats />} />
           <Route path="/highscore" element={<HighScore />} />
           <Route path="*" element={<NotFound />} />

@@ -1,12 +1,15 @@
 import { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { TVButton } from '@/components/TVButton';
 import { ArrowLeft } from 'lucide-react';
+import { GameState } from '@/types/game';
 
 const categories = ['All', 'Movies', 'Science', 'History', 'Sports', 'General'];
 
 const CategorySelect = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const gameState = location.state?.gameState as GameState;
   const [selectedIndex, setSelectedIndex] = useState(0);
   const buttonRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
@@ -41,7 +44,12 @@ const CategorySelect = () => {
   }, [selectedIndex, navigate]);
 
   const handleSelect = (category: string) => {
-    navigate('/round-intro', { state: { category } });
+    if (!gameState) {
+      navigate('/');
+      return;
+    }
+    const updatedGameState = { ...gameState, category };
+    navigate('/round-intro', { state: { gameState: updatedGameState } });
   };
 
   return (
