@@ -142,10 +142,6 @@ const Home = () => {
             </TVButton>
           </div>
         )}
-
-        <p className="mt-10 text-base text-muted-foreground">
-          Use arrow keys to navigate • Enter to select • Esc to go back
-        </p>
       </div>
     </div>
   );
