@@ -9,9 +9,24 @@ const RoundIntro = () => {
   const gameState = location.state?.gameState as GameState;
   const category = gameState?.category || 'All';
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const introAudioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     buttonRef.current?.focus();
+    
+    // Play intro sound effect
+    introAudioRef.current = new Audio('/round-start.mp3');
+    introAudioRef.current.volume = 0.5;
+    introAudioRef.current.play().catch(error => {
+      console.log('Intro audio autoplay blocked:', error);
+    });
+
+    return () => {
+      if (introAudioRef.current) {
+        introAudioRef.current.pause();
+        introAudioRef.current = null;
+      }
+    };
   }, []);
 
   const handleStart = () => {

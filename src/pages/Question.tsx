@@ -37,6 +37,9 @@ const Question = () => {
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const feedbackTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const musicRef = useRef<HTMLAudioElement | null>(null);
+  const correctSoundRef = useRef<HTMLAudioElement | null>(null);
+  const incorrectSoundRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     if (!gameState) {
@@ -57,6 +60,26 @@ const Question = () => {
         setStreak(gameState.currentStreak);
         setMaxStreak(gameState.currentMaxStreak);
         setCorrectCount(gameState.currentRoundCorrect);
+        
+        // Initialize audio when questions are ready
+        if (!musicRef.current) {
+          musicRef.current = new Audio('/question-music.mp3');
+          musicRef.current.loop = true;
+          musicRef.current.volume = 0.35;
+          musicRef.current.play().catch(error => {
+            console.log('Background music autoplay blocked:', error);
+          });
+        }
+        
+        if (!correctSoundRef.current) {
+          correctSoundRef.current = new Audio('/correct.mp3');
+          correctSoundRef.current.volume = 0.6;
+        }
+        
+        if (!incorrectSoundRef.current) {
+          incorrectSoundRef.current = new Audio('/incorrect.mp3');
+          incorrectSoundRef.current.volume = 0.6;
+        }
       } catch (error) {
         console.error('Error fetching questions:', error);
         // Fallback to home if we can't fetch questions
@@ -92,6 +115,14 @@ const Question = () => {
     setFeedbackState('incorrect');
     setStreak(0);
     
+    // Play incorrect sound
+    if (incorrectSoundRef.current) {
+      incorrectSoundRef.current.currentTime = 0;
+      incorrectSoundRef.current.play().catch(error => {
+        console.log('Could not play incorrect sound:', error);
+      });
+    }
+    
     feedbackTimeoutRef.current = setTimeout(() => {
       moveToNext();
     }, FEEDBACK_DELAY);
@@ -116,7 +147,14 @@ const Question = () => {
 
     setFeedbackState(isCorrect ? 'correct' : 'incorrect');
     
+    // Play appropriate sound
     if (isCorrect) {
+      if (correctSoundRef.current) {
+        correctSoundRef.current.currentTime = 0;
+        correctSoundRef.current.play().catch(error => {
+          console.log('Could not play correct sound:', error);
+        });
+      }
       setScore((prev) => prev + points);
       setStreak(newStreak);
       setMaxStreak((prev) => Math.max(prev, newStreak));
@@ -127,6 +165,12 @@ const Question = () => {
         [currentQuestion.category]: (prev[currentQuestion.category] || 0) + 1,
       }));
     } else {
+      if (incorrectSoundRef.current) {
+        incorrectSoundRef.current.currentTime = 0;
+        incorrectSoundRef.current.play().catch(error => {
+          console.log('Could not play incorrect sound:', error);
+        });
+      }
       setStreak(0);
     }
 
@@ -138,6 +182,12 @@ const Question = () => {
   const moveToNext = () => {
     if (currentIndex >= questions.length - 1) {
       if (!gameState) return;
+      
+      // Stop music before navigating to results
+      if (musicRef.current) {
+        musicRef.current.pause();
+        musicRef.current = null;
+      }
       
       const currentPlayer = gameState.players[gameState.currentPlayer];
       currentPlayer.totalScore += score;
@@ -211,10 +261,29 @@ const Question = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [highlightedAnswer, selectedAnswer, feedbackState, showPauseDialog, timeRemaining, streak, score, currentQuestion]);
 
+  // Pause/resume music with pause dialog
+  useEffect(() => {
+    if (musicRef.current) {
+      if (showPauseDialog) {
+        musicRef.current.pause();
+      }
+    }
+  }, [showPauseDialog]);
+
   useEffect(() => {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
       if (feedbackTimeoutRef.current) clearTimeout(feedbackTimeoutRef.current);
+      if (musicRef.current) {
+        musicRef.current.pause();
+        musicRef.current = null;
+      }
+      if (correctSoundRef.current) {
+        correctSoundRef.current = null;
+      }
+      if (incorrectSoundRef.current) {
+        incorrectSoundRef.current = null;
+      }
     };
   }, []);
 
@@ -224,9 +293,21 @@ const Question = () => {
     setHighlightedAnswer(null);
     setSelectedAnswer(null);
     setFeedbackState(null);
+    
+    // Resume background music
+    if (musicRef.current) {
+      musicRef.current.play().catch(error => {
+        console.log('Could not resume music:', error);
+      });
+    }
   };
 
   const handleQuit = () => {
+    // Stop music before quitting
+    if (musicRef.current) {
+      musicRef.current.pause();
+      musicRef.current = null;
+    }
     navigate('/');
   };
 
