@@ -43,13 +43,24 @@ const Question = () => {
       navigate('/');
       return;
     }
-    const selected = selectQuestions(category, QUESTIONS_PER_ROUND, gameState.currentRound);
-    setQuestions(selected);
-    setScore(gameState.currentRoundScore);
-    setStreak(gameState.currentStreak);
-    setMaxStreak(gameState.currentMaxStreak);
-    setCorrectCount(gameState.currentRoundCorrect);
-  }, [category, gameState]);
+    
+    const fetchQuestions = async () => {
+      try {
+        const selected = await selectQuestions(category, QUESTIONS_PER_ROUND, gameState.currentRound);
+        setQuestions(selected);
+        setScore(gameState.currentRoundScore);
+        setStreak(gameState.currentStreak);
+        setMaxStreak(gameState.currentMaxStreak);
+        setCorrectCount(gameState.currentRoundCorrect);
+      } catch (error) {
+        console.error('Error fetching questions:', error);
+        // Fallback to home if we can't fetch questions
+        navigate('/');
+      }
+    };
+    
+    fetchQuestions();
+  }, [category, gameState, navigate]);
 
   const currentQuestion = questions[currentIndex];
 

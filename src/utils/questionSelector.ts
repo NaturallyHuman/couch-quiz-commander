@@ -1,71 +1,28 @@
 import { Question } from '@/types/game';
-import questionsData from '@/data/questions.json';
+import { supabase } from '@/integrations/supabase/client';
 
-export const selectQuestions = (category: string, count: number = 6, round: number = 1): Question[] => {
-  const allQuestions = questionsData as Question[];
-  
-  // Filter by category if not "All"
-  const filtered = category === 'All' 
-    ? allQuestions 
-    : allQuestions.filter(q => q.category === category);
-
-  // Sort by difficulty
-  const sorted = [...filtered].sort((a, b) => a.difficulty - b.difficulty);
-
-  // Adjust difficulty range based on round
-  // Round 1: difficulty 1-6
-  // Round 2: difficulty 3-8
-  // Round 3: difficulty 5-10
-  // Round 4: difficulty 6-10 (for two-player mode)
-  const minDifficulty = Math.min(1 + (round - 1) * 2, 6);
-  const maxDifficulty = Math.min(minDifficulty + 5, 10);
-
-  const selected: Question[] = [];
-  const used = new Set<string>();
-
-  // Try to pick questions within the difficulty range
-  for (let i = 0; i < count; i++) {
-    const targetDiff = minDifficulty + Math.floor((i / count) * (maxDifficulty - minDifficulty + 1));
+export const selectQuestions = async (category: string, count: number = 6, round: number = 1): Promise<Question[]> => {
+  try {
+    console.log('Fetching questions from API:', { category, count, round });
     
-    // Find closest unused question to target difficulty
-    let bestMatch: Question | null = null;
-    let minDiff = Infinity;
+    const { data, error } = await supabase.functions.invoke('fetch-trivia', {
+      body: { category, amount: count, round }
+    });
 
-    for (const q of sorted) {
-      if (used.has(q.id)) continue;
-      if (q.difficulty < minDifficulty || q.difficulty > maxDifficulty) continue;
-      const diff = Math.abs(q.difficulty - targetDiff);
-      if (diff < minDiff) {
-        minDiff = diff;
-        bestMatch = q;
-      }
+    if (error) {
+      console.error('Error fetching questions from API:', error);
+      throw error;
     }
 
-    if (bestMatch) {
-      selected.push(bestMatch);
-      used.add(bestMatch.id);
-    } else {
-      // Fallback: pick any unused question within range
-      const remaining = sorted.filter(q => 
-        !used.has(q.id) && 
-        q.difficulty >= minDifficulty && 
-        q.difficulty <= maxDifficulty
-      );
-      if (remaining.length > 0) {
-        const fallback = remaining[0];
-        selected.push(fallback);
-        used.add(fallback.id);
-      } else {
-        // Last fallback: any unused question
-        const anyRemaining = sorted.filter(q => !used.has(q.id));
-        if (anyRemaining.length > 0) {
-          const fallback = anyRemaining[0];
-          selected.push(fallback);
-          used.add(fallback.id);
-        }
-      }
+    if (!data || !data.questions || data.questions.length === 0) {
+      console.error('No questions returned from API');
+      throw new Error('No questions available');
     }
+
+    console.log(`Successfully fetched ${data.questions.length} questions`);
+    return data.questions as Question[];
+  } catch (error) {
+    console.error('Failed to fetch questions:', error);
+    throw error;
   }
-
-  return selected;
 };

@@ -1,0 +1,4 @@
+project_id = "rgmenkueggdalwmppthw"
+
+[functions.fetch-trivia]
+verify_jwt = false
