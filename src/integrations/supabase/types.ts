@@ -14,7 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      questions: {
+        Row: {
+          category: string
+          choices: string[]
+          correct_index: number
+          created_at: string | null
+          difficulty: string
+          id: string
+          text: string
+        }
+        Insert: {
+          category: string
+          choices: string[]
+          correct_index: number
+          created_at?: string | null
+          difficulty: string
+          id?: string
+          text: string
+        }
+        Update: {
+          category?: string
+          choices?: string[]
+          correct_index?: number
+          created_at?: string | null
+          difficulty?: string
+          id?: string
+          text?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
