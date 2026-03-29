@@ -81,22 +81,29 @@ export const selectQuestions = async (
     throw new Error('No questions available');
   }
 
-  // Shuffle the results
+  // Shuffle question order
   const shuffled = data.sort(() => Math.random() - 0.5).slice(0, count);
 
   // Save used IDs
   const newUsedIds = [...persistedUsedIds, ...shuffled.map(q => q.id)];
   saveUsedQuestionIds(newUsedIds);
 
-  // Map to Question type
-  const questions: Question[] = shuffled.map(q => ({
-    id: q.id,
-    category: q.category,
-    difficulty: q.difficulty === 'easy' ? 1 : q.difficulty === 'medium' ? 2 : 3,
-    text: q.text,
-    choices: q.choices,
-    correctIndex: q.correct_index,
-  }));
+  // Map to Question type with randomized answer positions
+  const questions: Question[] = shuffled.map(q => {
+    const correctAnswer = q.choices[q.correct_index];
+    const indices = [0, 1, 2, 3].sort(() => Math.random() - 0.5);
+    const newChoices = indices.map(i => q.choices[i]);
+    const newCorrectIndex = newChoices.indexOf(correctAnswer);
+
+    return {
+      id: q.id,
+      category: q.category,
+      difficulty: q.difficulty === 'easy' ? 1 : q.difficulty === 'medium' ? 2 : 3,
+      text: q.text,
+      choices: newChoices,
+      correctIndex: newCorrectIndex,
+    };
+  });
 
   console.log(`Successfully fetched ${questions.length} questions`);
   return questions;
