@@ -320,7 +320,7 @@ const Question = () => {
 
   if (!currentQuestion) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <div className="flex h-full w-full items-center justify-center">
         <div className="text-2xl">Loading questions...</div>
       </div>
     );
