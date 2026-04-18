@@ -32,22 +32,22 @@ export const selectQuestions = async (
   const persistedUsedIds = getUsedQuestionIds();
   const allExcluded = [...new Set([...excludeIds, ...persistedUsedIds])];
 
-  console.log('Fetching questions from DB:', { category, count, difficulty, excludedCount: allExcluded.length });
+  console.log('Fetching questions from DB:', { count, difficulty, excludedCount: allExcluded.length });
 
+  // Always pull from ALL categories for variety. The `category` arg is ignored
+  // intentionally so each round mixes Movies, Science, History, Sports, etc.
   let query = supabase
     .from('questions')
     .select('*')
     .eq('difficulty', difficulty);
 
-  if (category !== 'All' && category !== 'Mixed') {
-    query = query.eq('category', category);
-  }
-
   if (allExcluded.length > 0) {
     query = query.not('id', 'in', `(${allExcluded.join(',')})`);
   }
 
-  let { data, error } = await query.limit(count);
+  // Fetch a wider pool then shuffle client-side so we get a true mix of categories
+  const POOL_MULTIPLIER = 5;
+  let { data, error } = await query.limit(count * POOL_MULTIPLIER);
 
   // If not enough questions, reset persisted used IDs and retry
   if (!error && (!data || data.length < count)) {
@@ -59,15 +59,11 @@ export const selectQuestions = async (
       .select('*')
       .eq('difficulty', difficulty);
 
-    if (category !== 'All' && category !== 'Mixed') {
-      retryQuery = retryQuery.eq('category', category);
-    }
-
     if (excludeIds.length > 0) {
       retryQuery = retryQuery.not('id', 'in', `(${excludeIds.join(',')})`);
     }
 
-    const retryResult = await retryQuery.limit(count);
+    const retryResult = await retryQuery.limit(count * POOL_MULTIPLIER);
     data = retryResult.data;
     error = retryResult.error;
   }
