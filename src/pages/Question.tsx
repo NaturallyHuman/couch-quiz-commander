@@ -266,8 +266,8 @@ const Question = () => {
 
   // Pause/resume music with pause dialog
   useEffect(() => {
-    if (musicRef.current && showPauseDialog) {
-      fadeOut(musicRef.current, 300);
+    if (showPauseDialog) {
+      audioManager.setTrackVolume('question', 0, 300);
     }
   }, [showPauseDialog]);
 
@@ -275,11 +275,6 @@ const Question = () => {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
       if (feedbackTimeoutRef.current) clearTimeout(feedbackTimeoutRef.current);
-      if (musicRef.current) {
-        const music = musicRef.current;
-        musicRef.current = null;
-        fadeOut(music, 400);
-      }
       if (correctSoundRef.current) {
         correctSoundRef.current = null;
       }
@@ -297,18 +292,12 @@ const Question = () => {
     setFeedbackState(null);
 
     // Resume background music with fade-in
-    if (musicRef.current) {
-      fadeIn(musicRef.current, 0.35, 500);
-    }
+    audioManager.setTrackVolume('question', 0.35, 500);
   };
 
   const handleQuit = () => {
     // Fade out music before quitting
-    if (musicRef.current) {
-      const music = musicRef.current;
-      musicRef.current = null;
-      fadeOut(music, 500);
-    }
+    audioManager.stopTrack('question', 500);
     navigate('/');
   };
 
