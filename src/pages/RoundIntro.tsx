@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { GameState } from '@/types/game';
-import { fadeIn, fadeOut } from '@/utils/audioFade';
+import { audioManager } from '@/utils/audioManager';
 
 const DURATION_MS = 5000;
 
