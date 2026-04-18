@@ -34,13 +34,16 @@ const Home = () => {
         maxStreak: 0,
         roundScores: [],
       }],
+    };
+    gameState.category = 'Mixed';
+    const _ = gameState; // no-op
       currentRoundScore: 0,
       currentRoundCorrect: 0,
       currentStreak: 0,
       currentMaxStreak: 0,
       usedQuestionIds: [],
     };
-    navigate('/category', { state: { gameState } });
+    navigate('/round-intro', { state: { gameState } });
   };
 
   const handlePlayTwoPlayer = () => {
@@ -74,7 +77,7 @@ const Home = () => {
       currentMaxStreak: 0,
       usedQuestionIds: [],
     };
-    navigate('/category', { state: { gameState } });
+    navigate('/round-intro', { state: { gameState } });
   };
 
   return (
