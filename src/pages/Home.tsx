@@ -46,7 +46,7 @@ const Home = () => {
   const handlePlayTwoPlayer = () => {
     const gameState: GameState = {
       mode: 'two-player',
-      category: '',
+      category: 'Mixed',
       currentRound: 1,
       totalRounds: 4,
       currentPlayer: 0,
