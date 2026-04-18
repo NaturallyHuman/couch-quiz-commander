@@ -331,7 +331,7 @@ const Question = () => {
       <div className="flex h-full w-full flex-col px-[5%] py-[3%]">
         {/* Timer Bar */}
         <div className="mb-4">
-          <TimerBar timeRemaining={timeRemaining} maxTime={QUESTION_TIME} />
+          <TimerBar key={currentIndex} timeRemaining={timeRemaining} maxTime={QUESTION_TIME} />
         </div>
 
         {/* Category */}
