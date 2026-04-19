@@ -254,7 +254,7 @@ const GameOver = () => {
 
           {/* Distance to next */}
           <div
-            className="mb-8 text-sm text-muted-foreground animate-fade-in"
+            className="mb-4 text-sm text-muted-foreground animate-fade-in"
             style={{ animationDelay: '1350ms', animationFillMode: 'both', opacity: 0 }}
           >
             {nextTier
@@ -264,7 +264,7 @@ const GameOver = () => {
 
           {/* Stat row */}
           <div
-            className="mb-10 flex items-center gap-6 text-base animate-fade-in"
+            className="mb-6 flex items-center gap-6 text-sm animate-fade-in"
             style={{ animationDelay: '1450ms', animationFillMode: 'both', opacity: 0 }}
           >
             <span className="text-foreground">
@@ -292,11 +292,9 @@ const GameOver = () => {
             className="flex items-center gap-4 animate-fade-in"
             style={{ animationDelay: '1600ms', animationFillMode: 'both', opacity: 0 }}
           >
-            <div className="rounded-md shadow-[0_0_0_0_hsl(var(--primary)/0.5)] animate-pulse">
-              <TVButton ref={playAgainRef} size="large" onClick={() => navigate('/')}>
-                Play Again
-              </TVButton>
-            </div>
+            <TVButton ref={playAgainRef} size="large" onClick={() => navigate('/')}>
+              Play Again
+            </TVButton>
             <TVButton variant="secondary" size="large" onClick={() => navigate('/')}>
               Home
             </TVButton>
