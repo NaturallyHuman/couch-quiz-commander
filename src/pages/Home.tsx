@@ -44,7 +44,7 @@ const Home = () => {
           </span>
         </h1>
         <p className="mb-12 text-lg text-muted-foreground">
-          The ultimate TV trivia experience
+          Train your brain.
         </p>
 
         <div className="flex flex-col items-center gap-5">
