@@ -162,7 +162,7 @@ const GameOver = () => {
       </div>
 
       {/* Elevated results card */}
-      <div className="relative z-10 w-full max-w-3xl rounded-2xl border border-border/50 bg-card/80 px-12 py-10 shadow-2xl backdrop-blur-sm">
+      <div className="relative z-10 w-full max-w-2xl rounded-2xl border border-border/50 bg-card/80 px-10 py-6 shadow-2xl backdrop-blur-sm">
         <div className="flex flex-col items-center text-center">
           {/* Eyebrow */}
           <div
@@ -174,14 +174,14 @@ const GameOver = () => {
 
           {/* Score (count-up) */}
           <div
-            className="mb-5 text-8xl font-black tracking-tight text-primary tabular-nums drop-shadow-[0_0_30px_hsl(var(--primary)/0.4)]"
+            className="mb-3 text-7xl font-black tracking-tight text-primary tabular-nums drop-shadow-[0_0_30px_hsl(var(--primary)/0.4)]"
           >
             {displayScore.toLocaleString()}
           </div>
 
           {/* Rank badge pill */}
           <div
-            className="mb-2 inline-flex items-center gap-2 rounded-full border border-primary/40 bg-primary/15 px-6 py-2 text-2xl font-bold uppercase tracking-wider text-primary animate-scale-in"
+            className="mb-1 inline-flex items-center gap-2 rounded-full border border-primary/40 bg-primary/15 px-6 py-1.5 text-xl font-bold uppercase tracking-wider text-primary animate-scale-in"
             style={{ animationDelay: '950ms', animationFillMode: 'both', opacity: 0 }}
           >
             <span style={{ animation: 'fade-in 0.01s 950ms forwards' }} className="opacity-0">
@@ -191,7 +191,7 @@ const GameOver = () => {
 
           {/* Percentile */}
           <div
-            className="mb-8 text-base text-muted-foreground animate-fade-in"
+            className="mb-5 text-base text-muted-foreground animate-fade-in"
             style={{ animationDelay: '1100ms', animationFillMode: 'both', opacity: 0 }}
           >
             {percentile !== null ? `Top ${percentile}% of your runs` : 'Your first run!'}
