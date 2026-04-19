@@ -101,7 +101,7 @@ const Question = () => {
       setTimeRemaining((prev) => {
         if (prev <= 1) {
           if (timerRef.current) clearInterval(timerRef.current);
-          handleRoundEnd();
+          setTimeout(() => handleRoundEnd(), 0);
           return 0;
         }
         return prev - 1;
