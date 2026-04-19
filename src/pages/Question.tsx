@@ -20,6 +20,7 @@ const Question = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const gameState = location.state?.gameState as GameState;
+  const preloadedQuestions = location.state?.preloadedQuestions as QuestionType[] | undefined;
   const category = gameState?.category || 'All';
 
   const [questions, setQuestions] = useState<QuestionType[]>([]);
@@ -55,6 +56,36 @@ const Question = () => {
       return;
     }
 
+    const initWithQuestions = (selected: QuestionType[]) => {
+      setQuestions(selected);
+      const baseTotal = (gameState.players[gameState.currentPlayer]?.totalScore || 0);
+      roundStartScoreRef.current = baseTotal + gameState.currentRoundScore;
+      setScore(baseTotal + gameState.currentRoundScore);
+      setStreak(gameState.currentStreak);
+      setMaxStreak(gameState.currentMaxStreak);
+      setCorrectCount(gameState.currentRoundCorrect);
+
+      audioManager.crossfade('intro', 'question', '/question-music.mp3', {
+        volume: 0.35,
+        loop: true,
+        durationMs: 1200,
+      });
+
+      if (!correctSoundRef.current) {
+        correctSoundRef.current = new Audio('/correct.mp3');
+        correctSoundRef.current.volume = 0.6;
+      }
+      if (!incorrectSoundRef.current) {
+        incorrectSoundRef.current = new Audio('/incorrect.mp3');
+        incorrectSoundRef.current.volume = 0.6;
+      }
+    };
+
+    if (preloadedQuestions && preloadedQuestions.length > 0) {
+      initWithQuestions(preloadedQuestions);
+      return;
+    }
+
     const fetchQuestions = async () => {
       try {
         const selected = await selectQuestions(
@@ -63,28 +94,7 @@ const Question = () => {
           gameState.currentRound,
           gameState.usedQuestionIds || []
         );
-        setQuestions(selected);
-        const baseTotal = (gameState.players[gameState.currentPlayer]?.totalScore || 0);
-        roundStartScoreRef.current = baseTotal + gameState.currentRoundScore;
-        setScore(baseTotal + gameState.currentRoundScore);
-        setStreak(gameState.currentStreak);
-        setMaxStreak(gameState.currentMaxStreak);
-        setCorrectCount(gameState.currentRoundCorrect);
-
-        audioManager.crossfade('intro', 'question', '/question-music.mp3', {
-          volume: 0.35,
-          loop: true,
-          durationMs: 1200,
-        });
-
-        if (!correctSoundRef.current) {
-          correctSoundRef.current = new Audio('/correct.mp3');
-          correctSoundRef.current.volume = 0.6;
-        }
-        if (!incorrectSoundRef.current) {
-          incorrectSoundRef.current = new Audio('/incorrect.mp3');
-          incorrectSoundRef.current.volume = 0.6;
-        }
+        initWithQuestions(selected);
       } catch (error) {
         console.error('Error fetching questions:', error);
         navigate('/');
@@ -321,19 +331,19 @@ const Question = () => {
   return (
     <>
       <div className="flex h-full w-full flex-col px-[5%] py-[3%]">
-        {/* Round-level Timer Bar — drains continuously across all questions */}
-        <div className="mb-4">
-          <TimerBar timeRemaining={timeRemaining} maxTime={ROUND_TIME} />
-        </div>
-
-        <div className="mb-2 flex items-center justify-center gap-6 text-base">
-          <span className="text-primary">{currentQuestion.category}</span>
-          <span className="relative text-muted-foreground">
-            Score: <span className="font-bold text-foreground">{score.toLocaleString()}</span>
+        {/* Top row: hourglass + drain bar + cumulative score */}
+        <div className="mb-4 flex items-center gap-4">
+          <div className="flex-1">
+            <TimerBar timeRemaining={timeRemaining} maxTime={ROUND_TIME} />
+          </div>
+          <div className="relative shrink-0">
+            <span className="text-2xl font-bold tabular-nums text-foreground">
+              {score.toLocaleString()}
+            </span>
             {scorePopup && (
               <span
                 key={scorePopup.key}
-                className="pointer-events-none absolute -top-6 left-1/2 -translate-x-1/2 whitespace-nowrap text-sm font-bold text-success animate-fade-in"
+                className="pointer-events-none absolute -top-6 right-0 whitespace-nowrap text-sm font-bold text-success animate-fade-in"
               >
                 +{scorePopup.base}
                 {scorePopup.bonus > 0 && (
@@ -341,7 +351,11 @@ const Question = () => {
                 )}
               </span>
             )}
-          </span>
+          </div>
+        </div>
+
+        <div className="mb-2 flex items-center justify-center gap-6 text-base">
+          <span className="text-primary">{currentQuestion.category}</span>
           {streak >= 2 && !streakLostFlash && (
             <span className="text-warning font-bold">🔥 {streak} streak</span>
           )}
