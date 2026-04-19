@@ -54,10 +54,10 @@ export const TimerBar = ({ timeRemaining, maxTime, score }: TimerBarProps) => {
         </div>
       </div>
 
-      {/* Question counter pill */}
-      {questionNumber !== undefined && (
-        <div className="flex h-11 min-w-[70px] items-center justify-center rounded-full border border-border/60 bg-card/60 px-5 text-xl font-bold tabular-nums backdrop-blur-sm">
-          {questionNumber}
+      {/* Score pill */}
+      {score !== undefined && (
+        <div className="flex h-11 min-w-[90px] items-center justify-center rounded-full border border-border/60 bg-card/60 px-5 text-xl font-bold tabular-nums backdrop-blur-sm">
+          {score.toLocaleString()}
         </div>
       )}
     </div>
