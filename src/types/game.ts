@@ -16,6 +16,11 @@ export interface PlayerStats {
   totalQuestions: number;
   maxStreak: number;
   roundScores: number[];
+  // Aggregated across all rounds in the current game
+  correctByCategory?: { [category: string]: number };
+  attemptedByCategory?: { [category: string]: number };
+  // Whether the game ended on a wrong answer (for awards)
+  endedOnWrong?: boolean;
 }
 
 export interface GameState {
@@ -52,6 +57,7 @@ export interface LifetimeStats {
   highestScore: number;
   longestStreak: number;
   timesPlayed: number;
+  recentScores: number[]; // newest first, max 10
   categoryStats: {
     [category: string]: {
       correct: number;

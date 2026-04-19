@@ -1,11 +1,13 @@
 import { LifetimeStats, RoundResult } from '@/types/game';
 
 const STORAGE_KEY = 'smarty-couch-stats';
+const MAX_RECENT_SCORES = 10;
 
 const defaultStats: LifetimeStats = {
   highestScore: 0,
   longestStreak: 0,
   timesPlayed: 0,
+  recentScores: [],
   categoryStats: {},
 };
 
@@ -35,12 +37,11 @@ export const updateLifetimeStats = (
   correctByCategory: { [key: string]: number }
 ): LifetimeStats => {
   const stats = loadLifetimeStats();
-  
+
   stats.highestScore = Math.max(stats.highestScore, result.score);
   stats.longestStreak = Math.max(stats.longestStreak, result.maxStreak);
   stats.timesPlayed += 1;
 
-  // Update category stats
   Object.entries(correctByCategory).forEach(([cat, correct]) => {
     if (!stats.categoryStats[cat]) {
       stats.categoryStats[cat] = { correct: 0, total: 0 };
@@ -51,4 +52,21 @@ export const updateLifetimeStats = (
 
   saveLifetimeStats(stats);
   return stats;
+};
+
+/**
+ * Records a completed game's final score and updates lifetime aggregates.
+ * Returns the previous personal best (before this game) so callers can detect
+ * a new record.
+ */
+export const recordGameScore = (finalScore: number): { stats: LifetimeStats; previousBest: number } => {
+  const stats = loadLifetimeStats();
+  const previousBest = stats.highestScore;
+
+  stats.recentScores = [finalScore, ...(stats.recentScores || [])].slice(0, MAX_RECENT_SCORES);
+  stats.highestScore = Math.max(stats.highestScore, finalScore);
+  stats.timesPlayed += 1;
+
+  saveLifetimeStats(stats);
+  return { stats, previousBest };
 };

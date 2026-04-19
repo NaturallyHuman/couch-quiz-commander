@@ -7,12 +7,12 @@ import { calculateScore } from '@/utils/scoring';
 import { Question as QuestionType, GameState } from '@/types/game';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { TVButton } from '@/components/TVButton';
-import { Flame, ArrowUp, ArrowDown, ArrowLeft, ArrowRight } from 'lucide-react';
+import { ArrowUp, ArrowDown, ArrowLeft, ArrowRight } from 'lucide-react';
 import { audioManager } from '@/utils/audioManager';
 
-const QUESTION_TIME = 10;
-const QUESTIONS_PER_ROUND = 10;
-const FEEDBACK_DELAY = 1200;
+const ROUND_TIME = 60; // seconds — the entire round is one 60s sprint
+const QUESTION_POOL_SIZE = 30; // fetched up front so we never run out
+const FEEDBACK_DELAY = 600; // snappier sprint feel
 
 type AnswerDirection = 0 | 1 | 2 | 3 | null;
 
@@ -27,31 +27,36 @@ const Question = () => {
   const [highlightedAnswer, setHighlightedAnswer] = useState<AnswerDirection>(null);
   const [selectedAnswer, setSelectedAnswer] = useState<AnswerDirection>(null);
   const [feedbackState, setFeedbackState] = useState<'correct' | 'incorrect' | null>(null);
-  const [timeRemaining, setTimeRemaining] = useState(QUESTION_TIME);
+  const [timeRemaining, setTimeRemaining] = useState(ROUND_TIME);
   const [score, setScore] = useState(0);
   const [streak, setStreak] = useState(0);
   const [maxStreak, setMaxStreak] = useState(0);
   const [correctCount, setCorrectCount] = useState(0);
+  const [attemptedCount, setAttemptedCount] = useState(0);
   const [correctByCategory, setCorrectByCategory] = useState<{ [key: string]: number }>({});
+  const [attemptedByCategory, setAttemptedByCategory] = useState<{ [key: string]: number }>({});
   const [showPauseDialog, setShowPauseDialog] = useState(false);
   const [streakBonus, setStreakBonus] = useState(0);
+  const [endedOnWrong, setEndedOnWrong] = useState(false);
 
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const feedbackTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const correctSoundRef = useRef<HTMLAudioElement | null>(null);
   const incorrectSoundRef = useRef<HTMLAudioElement | null>(null);
+  const roundEndedRef = useRef(false);
+  const lastWasWrongRef = useRef(false);
 
   useEffect(() => {
     if (!gameState) {
       navigate('/');
       return;
     }
-    
+
     const fetchQuestions = async () => {
       try {
         const selected = await selectQuestions(
-          category, 
-          QUESTIONS_PER_ROUND, 
+          category,
+          QUESTION_POOL_SIZE,
           gameState.currentRound,
           gameState.usedQuestionIds || []
         );
@@ -60,42 +65,41 @@ const Question = () => {
         setStreak(gameState.currentStreak);
         setMaxStreak(gameState.currentMaxStreak);
         setCorrectCount(gameState.currentRoundCorrect);
-        
-        // Crossfade intro music into the question loop — seamless handoff.
+
         audioManager.crossfade('intro', 'question', '/question-music.mp3', {
           volume: 0.35,
           loop: true,
           durationMs: 1200,
         });
-        
+
         if (!correctSoundRef.current) {
           correctSoundRef.current = new Audio('/correct.mp3');
           correctSoundRef.current.volume = 0.6;
         }
-        
         if (!incorrectSoundRef.current) {
           incorrectSoundRef.current = new Audio('/incorrect.mp3');
           incorrectSoundRef.current.volume = 0.6;
         }
       } catch (error) {
         console.error('Error fetching questions:', error);
-        // Fallback to home if we can't fetch questions
         navigate('/');
       }
     };
-    
+
     fetchQuestions();
   }, [category, gameState, navigate]);
 
   const currentQuestion = questions[currentIndex];
 
+  // Single round-level timer — drains continuously across all questions.
   useEffect(() => {
-    if (!currentQuestion || selectedAnswer !== null || feedbackState !== null) return;
+    if (questions.length === 0 || showPauseDialog || roundEndedRef.current) return;
 
     timerRef.current = setInterval(() => {
       setTimeRemaining((prev) => {
         if (prev <= 1) {
-          handleTimeout();
+          if (timerRef.current) clearInterval(timerRef.current);
+          handleRoundEnd();
           return 0;
         }
         return prev - 1;
@@ -105,53 +109,104 @@ const Question = () => {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [currentQuestion, selectedAnswer, feedbackState]);
+  }, [questions.length, showPauseDialog]);
 
-  const handleTimeout = () => {
+  const handleRoundEnd = () => {
+    if (roundEndedRef.current) return;
+    roundEndedRef.current = true;
     if (timerRef.current) clearInterval(timerRef.current);
-    setFeedbackState('incorrect');
-    setStreak(0);
-    
-    // Play incorrect sound
-    if (incorrectSoundRef.current) {
-      incorrectSoundRef.current.currentTime = 0;
-      incorrectSoundRef.current.play().catch(error => {
-        console.log('Could not play incorrect sound:', error);
-      });
+    if (feedbackTimeoutRef.current) clearTimeout(feedbackTimeoutRef.current);
+
+    if (!gameState) return;
+
+    audioManager.stopTrack('question', 600);
+
+    const currentPlayer = gameState.players[gameState.currentPlayer];
+    currentPlayer.totalScore += score;
+    currentPlayer.correctAnswers += correctCount;
+    currentPlayer.totalQuestions += attemptedCount;
+    currentPlayer.maxStreak = Math.max(currentPlayer.maxStreak, maxStreak);
+    currentPlayer.roundScores.push(score);
+
+    // Merge category aggregates onto the player.
+    const mergedCorrect = { ...(currentPlayer.correctByCategory || {}) };
+    Object.entries(correctByCategory).forEach(([k, v]) => {
+      mergedCorrect[k] = (mergedCorrect[k] || 0) + v;
+    });
+    currentPlayer.correctByCategory = mergedCorrect;
+
+    const mergedAttempted = { ...(currentPlayer.attemptedByCategory || {}) };
+    Object.entries(attemptedByCategory).forEach(([k, v]) => {
+      mergedAttempted[k] = (mergedAttempted[k] || 0) + v;
+    });
+    currentPlayer.attemptedByCategory = mergedAttempted;
+
+    currentPlayer.endedOnWrong = lastWasWrongRef.current;
+
+    const usedIds = [
+      ...(gameState.usedQuestionIds || []),
+      ...questions.slice(0, currentIndex + 1).map((q) => q.id),
+    ];
+
+    let nextPlayer = gameState.currentPlayer;
+    let nextRound = gameState.currentRound;
+    if (gameState.mode === 'two-player') {
+      nextPlayer = (gameState.currentPlayer + 1) % gameState.players.length;
+      if (nextPlayer === 0) nextRound++;
+    } else {
+      nextRound++;
     }
-    
-    feedbackTimeoutRef.current = setTimeout(() => {
-      moveToNext();
-    }, FEEDBACK_DELAY);
+
+    const updatedGameState: GameState = {
+      ...gameState,
+      players: [...gameState.players],
+      currentRound: nextRound,
+      currentPlayer: nextPlayer,
+      currentRoundScore: 0,
+      currentRoundCorrect: 0,
+      currentStreak: 0,
+      currentMaxStreak: 0,
+      usedQuestionIds: usedIds,
+    };
+
+    const isGameOver = nextRound > gameState.totalRounds;
+    if (isGameOver) {
+      navigate('/game-over', { state: { gameState: updatedGameState } });
+    } else if (updatedGameState.mode === 'two-player') {
+      navigate('/turn-transition', { state: { gameState: updatedGameState } });
+    } else {
+      navigate('/round-intro', { state: { gameState: updatedGameState } });
+    }
   };
 
   const handleAnswer = (answerIndex: AnswerDirection) => {
-    if (answerIndex === null || selectedAnswer !== null || feedbackState !== null || !currentQuestion) return;
+    if (
+      answerIndex === null ||
+      selectedAnswer !== null ||
+      feedbackState !== null ||
+      !currentQuestion ||
+      roundEndedRef.current
+    )
+      return;
 
     setSelectedAnswer(answerIndex);
-    if (timerRef.current) clearInterval(timerRef.current);
-    setTimeRemaining(0);
 
     const isCorrect = answerIndex === currentQuestion.correctIndex;
     const newStreak = isCorrect ? streak + 1 : 0;
-    
-    const { points, breakdown } = calculateScore(
-      isCorrect,
-      timeRemaining,
-      QUESTION_TIME,
-      newStreak
-    );
+
+    const { points, breakdown } = calculateScore(isCorrect, 0, ROUND_TIME, newStreak);
 
     setFeedbackState(isCorrect ? 'correct' : 'incorrect');
-    
-    // Play appropriate sound
+    setAttemptedCount((prev) => prev + 1);
+    setAttemptedByCategory((prev) => ({
+      ...prev,
+      [currentQuestion.category]: (prev[currentQuestion.category] || 0) + 1,
+    }));
+    lastWasWrongRef.current = !isCorrect;
+
     if (isCorrect) {
-      if (correctSoundRef.current) {
-        correctSoundRef.current.currentTime = 0;
-        correctSoundRef.current.play().catch(error => {
-          console.log('Could not play correct sound:', error);
-        });
-      }
+      correctSoundRef.current?.play().catch(() => {});
+      if (correctSoundRef.current) correctSoundRef.current.currentTime = 0;
       setScore((prev) => prev + points);
       setStreak(newStreak);
       setMaxStreak((prev) => Math.max(prev, newStreak));
@@ -162,12 +217,8 @@ const Question = () => {
         [currentQuestion.category]: (prev[currentQuestion.category] || 0) + 1,
       }));
     } else {
-      if (incorrectSoundRef.current) {
-        incorrectSoundRef.current.currentTime = 0;
-        incorrectSoundRef.current.play().catch(error => {
-          console.log('Could not play incorrect sound:', error);
-        });
-      }
+      incorrectSoundRef.current?.play().catch(() => {});
+      if (incorrectSoundRef.current) incorrectSoundRef.current.currentTime = 0;
       setStreak(0);
     }
 
@@ -177,66 +228,22 @@ const Question = () => {
   };
 
   const moveToNext = () => {
+    if (roundEndedRef.current) return;
+    // If we run out of questions in the pool, end the round early.
     if (currentIndex >= questions.length - 1) {
-      if (!gameState) return;
-
-      // Fade out question music before navigating away
-      audioManager.stopTrack('question', 600);
-
-      const currentPlayer = gameState.players[gameState.currentPlayer];
-      currentPlayer.totalScore += score;
-      currentPlayer.correctAnswers += correctCount;
-      currentPlayer.totalQuestions += questions.length;
-      currentPlayer.maxStreak = Math.max(currentPlayer.maxStreak, maxStreak);
-      currentPlayer.roundScores.push(score);
-
-      const usedIds = [...(gameState.usedQuestionIds || []), ...questions.map(q => q.id)];
-
-      // Determine next round / player
-      let nextPlayer = gameState.currentPlayer;
-      let nextRound = gameState.currentRound;
-
-      if (gameState.mode === 'two-player') {
-        nextPlayer = (gameState.currentPlayer + 1) % gameState.players.length;
-        if (nextPlayer === 0) nextRound++;
-      } else {
-        nextRound++;
-      }
-
-      const updatedGameState: GameState = {
-        ...gameState,
-        players: [...gameState.players],
-        currentRound: nextRound,
-        currentPlayer: nextPlayer,
-        currentRoundScore: 0,
-        currentRoundCorrect: 0,
-        currentStreak: 0,
-        currentMaxStreak: 0,
-        usedQuestionIds: usedIds,
-      };
-
-      const isGameOver = nextRound > gameState.totalRounds;
-
-      if (isGameOver) {
-        navigate('/game-over', { state: { gameState: updatedGameState } });
-      } else if (updatedGameState.mode === 'two-player') {
-        navigate('/turn-transition', { state: { gameState: updatedGameState } });
-      } else {
-        navigate('/round-intro', { state: { gameState: updatedGameState } });
-      }
-    } else {
-      setCurrentIndex((prev) => prev + 1);
-      setHighlightedAnswer(null);
-      setSelectedAnswer(null);
-      setFeedbackState(null);
-      setTimeRemaining(QUESTION_TIME);
+      handleRoundEnd();
+      return;
     }
+    setCurrentIndex((prev) => prev + 1);
+    setHighlightedAnswer(null);
+    setSelectedAnswer(null);
+    setFeedbackState(null);
   };
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (showPauseDialog) return;
-      
+
       if (e.key === 'Escape') {
         e.preventDefault();
         setShowPauseDialog(true);
@@ -255,16 +262,14 @@ const Question = () => {
 
       if (e.key in directionMap) {
         e.preventDefault();
-        const direction = directionMap[e.key];
-        handleAnswer(direction);
+        handleAnswer(directionMap[e.key]);
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [highlightedAnswer, selectedAnswer, feedbackState, showPauseDialog, timeRemaining, streak, score, currentQuestion]);
+  }, [selectedAnswer, feedbackState, showPauseDialog, currentQuestion]);
 
-  // Pause/resume music with pause dialog
   useEffect(() => {
     if (showPauseDialog) {
       audioManager.setTrackVolume('question', 0, 300);
@@ -275,28 +280,18 @@ const Question = () => {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
       if (feedbackTimeoutRef.current) clearTimeout(feedbackTimeoutRef.current);
-      if (correctSoundRef.current) {
-        correctSoundRef.current = null;
-      }
-      if (incorrectSoundRef.current) {
-        incorrectSoundRef.current = null;
-      }
+      correctSoundRef.current = null;
+      incorrectSoundRef.current = null;
     };
   }, []);
 
   const handleResume = () => {
     setShowPauseDialog(false);
-    setTimeRemaining(QUESTION_TIME);
-    setHighlightedAnswer(null);
-    setSelectedAnswer(null);
-    setFeedbackState(null);
-
-    // Resume background music with fade-in
     audioManager.setTrackVolume('question', 0.35, 500);
   };
 
   const handleQuit = () => {
-    // Fade out music before quitting
+    roundEndedRef.current = true;
     audioManager.stopTrack('question', 500);
     navigate('/');
   };
@@ -312,22 +307,23 @@ const Question = () => {
   return (
     <>
       <div className="flex h-full w-full flex-col px-[5%] py-[3%]">
-        {/* Timer Bar */}
+        {/* Round-level Timer Bar — drains continuously across all questions */}
         <div className="mb-4">
-          <TimerBar key={currentIndex} timeRemaining={timeRemaining} maxTime={QUESTION_TIME} />
+          <TimerBar timeRemaining={timeRemaining} maxTime={ROUND_TIME} />
         </div>
 
-        {/* Category */}
-        <h2 className="mb-2 text-center text-base text-primary">
-          {currentQuestion.category}
-        </h2>
+        <div className="mb-2 flex items-center justify-center gap-6 text-base">
+          <span className="text-primary">{currentQuestion.category}</span>
+          <span className="text-muted-foreground">Score: <span className="font-bold text-foreground">{score.toLocaleString()}</span></span>
+          {streak >= 2 && (
+            <span className="text-warning font-bold">🔥 {streak} streak</span>
+          )}
+        </div>
 
-        {/* Question */}
         <h1 className="mb-6 text-center text-2xl font-semibold leading-tight px-8">
           {currentQuestion.text}
         </h1>
 
-        {/* D-pad Answer Layout — d-pad is the fixed anchor; answer slots are fixed width so they never shift it */}
         <div className="flex flex-1 items-center justify-center">
           <div
             className="grid items-center justify-items-center"
@@ -338,7 +334,6 @@ const Question = () => {
               rowGap: '32px',
             }}
           >
-            {/* Top Answer (A / Up) — spans all 3 columns, centered above d-pad */}
             <div className="col-span-3 w-[420px] text-center">
               <AnswerChoice
                 letter="A"
@@ -356,7 +351,6 @@ const Question = () => {
               />
             </div>
 
-            {/* Left Answer (B / Left) */}
             <div className="w-[360px] text-right">
               <AnswerChoice
                 letter="B"
@@ -374,7 +368,6 @@ const Question = () => {
               />
             </div>
 
-            {/* Center D-pad Visual — the page anchor */}
             <div className="flex h-32 w-32 shrink-0 items-center justify-center">
               <div className="relative h-full w-full opacity-30">
                 <div className="absolute left-1/2 top-0 grid h-10 w-10 -translate-x-1/2 place-items-center rounded-t-lg border-2 border-foreground/50 bg-background/20">
@@ -393,7 +386,6 @@ const Question = () => {
               </div>
             </div>
 
-            {/* Right Answer (D / Right) */}
             <div className="w-[360px] text-left">
               <AnswerChoice
                 letter="D"
@@ -411,7 +403,6 @@ const Question = () => {
               />
             </div>
 
-            {/* Bottom Answer (C / Down) — spans all 3 columns, centered below d-pad */}
             <div className="col-span-3 w-[420px] text-center">
               <AnswerChoice
                 letter="C"
