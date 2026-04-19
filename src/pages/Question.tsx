@@ -38,6 +38,8 @@ const Question = () => {
   const [showPauseDialog, setShowPauseDialog] = useState(false);
   const [streakBonus, setStreakBonus] = useState(0);
   const [endedOnWrong, setEndedOnWrong] = useState(false);
+  const [streakLostFlash, setStreakLostFlash] = useState(false);
+  const [scorePopup, setScorePopup] = useState<{ base: number; bonus: number; key: number } | null>(null);
 
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const feedbackTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -216,10 +218,16 @@ const Question = () => {
         ...prev,
         [currentQuestion.category]: (prev[currentQuestion.category] || 0) + 1,
       }));
+      setScorePopup({ base: breakdown.base, bonus: breakdown.streak, key: Date.now() });
     } else {
       incorrectSoundRef.current?.play().catch(() => {});
       if (incorrectSoundRef.current) incorrectSoundRef.current.currentTime = 0;
+      const hadStreak = streak >= 2;
       setStreak(0);
+      if (hadStreak) {
+        setStreakLostFlash(true);
+        setTimeout(() => setStreakLostFlash(false), 700);
+      }
     }
 
     feedbackTimeoutRef.current = setTimeout(() => {
@@ -238,6 +246,7 @@ const Question = () => {
     setHighlightedAnswer(null);
     setSelectedAnswer(null);
     setFeedbackState(null);
+    setScorePopup(null);
   };
 
   useEffect(() => {
@@ -314,9 +323,25 @@ const Question = () => {
 
         <div className="mb-2 flex items-center justify-center gap-6 text-base">
           <span className="text-primary">{currentQuestion.category}</span>
-          <span className="text-muted-foreground">Score: <span className="font-bold text-foreground">{score.toLocaleString()}</span></span>
-          {streak >= 2 && (
+          <span className="relative text-muted-foreground">
+            Score: <span className="font-bold text-foreground">{score.toLocaleString()}</span>
+            {scorePopup && (
+              <span
+                key={scorePopup.key}
+                className="pointer-events-none absolute -top-6 left-1/2 -translate-x-1/2 whitespace-nowrap text-sm font-bold text-success animate-fade-in"
+              >
+                +{scorePopup.base}
+                {scorePopup.bonus > 0 && (
+                  <span className="ml-1 text-warning">+{scorePopup.bonus} bonus</span>
+                )}
+              </span>
+            )}
+          </span>
+          {streak >= 2 && !streakLostFlash && (
             <span className="text-warning font-bold">🔥 {streak} streak</span>
+          )}
+          {streakLostFlash && (
+            <span className="font-bold text-destructive animate-fade-in">💔 Streak lost</span>
           )}
         </div>
 
