@@ -1,55 +1,57 @@
 
-## Two changes
+Three changes, all small.
 
-### 1. Score should be cumulative across rounds (not reset to 0 each round)
+## 1. Preload questions during RoundIntro (skip "Loading questions…")
 
-**Current behavior:** Each round starts `score = gameState.currentRoundScore` which is always `0` after a round ends. The displayed score in `Question.tsx` shows only the current round. The cumulative total is hidden inside `player.totalScore` and only surfaces on the final screen.
+**File: `src/pages/RoundIntro.tsx`**
+- Call `selectQuestions(...)` on mount alongside the audio/timer.
+- Hold the fetched questions in a ref/state.
+- Pass them through to `/question` via `location.state`: `{ gameState, preloadedQuestions }`.
+- Edge cases:
+  - If the 5s timer fires before the fetch resolves, wait for the fetch (don't navigate yet) so we never land on the Question screen empty. Track with a `readyRef` + small effect that navigates as soon as both "timer done" and "questions loaded" are true.
+  - If fetch errors, navigate home (same as Question.tsx does today).
 
-**Bug per the user:** Visually the score appears to "reset" between rounds because the in-game score display restarts at 0 for round 2 and round 3.
+**File: `src/pages/Question.tsx`**
+- If `location.state.preloadedQuestions` is present, skip the fetch and use them directly.
+- Keep the existing fetch path as fallback (in case Question is reached without preload, e.g. dev nav).
+- The "Loading questions…" branch becomes effectively unreachable in the normal flow, but stays as a safety net.
 
-**Fix in `src/pages/Question.tsx`:**
-- Initialize `score` from `gameState.players[currentPlayer].totalScore + gameState.currentRoundScore` so the displayed score continues from where the previous round ended.
-- Track a separate `roundStartScore` ref so when the round ends we still push the correct *round-only* delta into `player.roundScores` and add only the round's points to `totalScore` (no double-counting).
-- Net effect: score on screen never resets; `player.totalScore` math stays correct; `roundScores` array stays per-round.
+## 2. Replace timer countdown number with hourglass icon
 
-### 2. Redesign Quiz Complete screen to match the uploaded mockup
+**File: `src/components/TimerBar.tsx`**
+- Remove the `{timeRemaining}` numeric span on the left.
+- Replace with `<Hourglass />` from `lucide-react` (`h-6 w-6`, muted color normally, `text-destructive animate-pulse` when `isLow`).
+- Keep the bar itself unchanged structurally — direction change handled in step 3.
 
-**Layout (centered, matches user's image):**
+## 3. Move score to upper right + reverse progress bar direction
 
-```
-                Final Score
-                  2,400
+**Score relocation — `src/pages/Question.tsx`:**
+- Wrap the existing TimerBar row so it becomes a single horizontal row:
+  ```
+  [hourglass] [============ progress bar ============] [score]
+  ```
+- Remove the centered "Score:" label/strip below the bar.
+- Score shows just the number (`{score.toLocaleString()}`) in `font-bold text-foreground tabular-nums text-2xl`, no "Score:" prefix.
+- Streak indicator + score popup move with the score (right side, stacked or inline beside it). Keep the popup absolute-positioned relative to the score number.
+- Category name stays where it is (centered above the question) OR moves to a small line below — keeping it centered above question for now since user didn't ask to move it.
 
-               Quick Thinker!
+**Reverse bar animation — `src/components/TimerBar.tsx`:**
+- Currently the filled portion shrinks from right to left as time drains (width goes 100% → 0%, anchored left).
+- "Reverse direction" = the bar should drain from the **left** instead (filled portion shrinks toward the right, or equivalently the empty portion grows from the left).
+- Implementation: anchor the fill to the right edge using `ml-auto` on the inner div, so as `width` shrinks, it stays pinned right and the left side empties first.
 
+  ```tsx
+  <div className="h-3 flex-1 overflow-hidden rounded-full bg-secondary flex">
+    <div
+      className={cn('h-full ease-linear ml-auto', { ... })}
+      style={{ width: `${percentage}%` }}
+    />
+  </div>
+  ```
 
-  Best streak     Best category    Worst category
-       8             History           Science
-  2300 points!        9/9               3/9
+## Files touched
+- `src/pages/RoundIntro.tsx` — preload questions, navigate when both ready.
+- `src/pages/Question.tsx` — accept preloaded questions; new top row layout (hourglass + bar + score); remove old score strip.
+- `src/components/TimerBar.tsx` — swap number for Hourglass icon; right-anchor the fill so it drains left-first.
 
-
-              [ Play Again ]   [ Home ]
-```
-
-**Specifics:**
-- "Final Score" eyebrow (small uppercase muted), then the big number (`text-7xl tabular-nums text-primary`).
-- Tier name as a single line with `!` (e.g. "Quick Thinker!"). Same TIERS table as today.
-- Three-column stat row with generous spacing:
-  - **Best streak** — number + secondary line showing points contributed by streak bonuses this game (use `streakBonusTotal` — see logic note below).
-  - **Best category** — name + `correct/attempted`.
-  - **Worst category** — name + `correct/attempted` (lowest accuracy with min 2 attempts; if only one category played, hide this column).
-- Two buttons at the bottom: Play Again (focused) and Home.
-- Keep existing celebration glow + confetti dots.
-- Drop the percentile line and tier ladder pills (mockup doesn't show them). Keep them out unless requested.
-
-**Logic verification / fixes:**
-- **Best/Worst category** computed from `attemptedByCategory` and `correctByCategory` on `players[0]`. Min 2 attempts to qualify. Worst = lowest accuracy among qualifying; tie-break by lower correct count.
-- **Best streak points**: track total `streakBonus` accumulated across the whole game. Currently `streakBonus` resets each round in `Question.tsx` and is never persisted. Add `streakBonusTotal` to `PlayerStats` (in `src/types/game.ts`) and merge it into the player at round end the same way other aggregates merge.
-- **Score number shown** = `player.totalScore` (now accurate since score is cumulative end-to-end).
-
-### Files touched
-- `src/pages/Question.tsx` — initialize displayed score from cumulative total; fix round-end math to add only round delta; track and persist `streakBonusTotal`.
-- `src/types/game.ts` — add `streakBonusTotal?: number` to `PlayerStats`.
-- `src/pages/GameOver.tsx` — new layout per mockup; add worst-category helper; use `streakBonusTotal` for the "X points!" subline.
-
-No new dependencies. No routing changes. Tier thresholds and styling tokens unchanged.
+No new dependencies (Hourglass is already in lucide-react). No type/route changes.
