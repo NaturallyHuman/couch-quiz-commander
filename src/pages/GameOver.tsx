@@ -132,11 +132,11 @@ const GameOver = () => {
   }
 
   return (
-    <div className="relative flex h-full w-full flex-col items-center justify-center overflow-hidden px-[5%] py-[3%]">
+    <div className="relative flex h-full w-full flex-col items-center justify-center overflow-hidden px-[3%] py-[2%]">
       {/* Celebration glow */}
       <div
         aria-hidden
-        className="pointer-events-none absolute left-1/2 top-1/3 h-[600px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-60 blur-3xl animate-fade-in"
+        className="pointer-events-none absolute left-1/2 top-1/3 h-[400px] w-[400px] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-60 blur-3xl animate-fade-in"
         style={{
           background:
             'radial-gradient(circle, hsl(var(--primary) / 0.35) 0%, transparent 70%)',
@@ -162,7 +162,7 @@ const GameOver = () => {
       </div>
 
       {/* Elevated results card */}
-      <div className="relative z-10 w-full max-w-3xl rounded-2xl border border-border/50 bg-card/80 px-12 py-10 shadow-2xl backdrop-blur-sm">
+      <div className="relative z-10 w-full max-w-2xl rounded-2xl border border-border/50 bg-card/80 px-10 py-6 shadow-2xl backdrop-blur-sm">
         <div className="flex flex-col items-center text-center">
           {/* Eyebrow */}
           <div
@@ -174,14 +174,14 @@ const GameOver = () => {
 
           {/* Score (count-up) */}
           <div
-            className="mb-5 text-8xl font-black tracking-tight text-primary tabular-nums drop-shadow-[0_0_30px_hsl(var(--primary)/0.4)]"
+            className="mb-3 text-7xl font-black tracking-tight text-primary tabular-nums drop-shadow-[0_0_30px_hsl(var(--primary)/0.4)]"
           >
             {displayScore.toLocaleString()}
           </div>
 
           {/* Rank badge pill */}
           <div
-            className="mb-2 inline-flex items-center gap-2 rounded-full border border-primary/40 bg-primary/15 px-6 py-2 text-2xl font-bold uppercase tracking-wider text-primary animate-scale-in"
+            className="mb-1 inline-flex items-center gap-2 rounded-full border border-primary/40 bg-primary/15 px-6 py-1.5 text-xl font-bold uppercase tracking-wider text-primary animate-scale-in"
             style={{ animationDelay: '950ms', animationFillMode: 'both', opacity: 0 }}
           >
             <span style={{ animation: 'fade-in 0.01s 950ms forwards' }} className="opacity-0">
@@ -191,7 +191,7 @@ const GameOver = () => {
 
           {/* Percentile */}
           <div
-            className="mb-8 text-base text-muted-foreground animate-fade-in"
+            className="mb-5 text-base text-muted-foreground animate-fade-in"
             style={{ animationDelay: '1100ms', animationFillMode: 'both', opacity: 0 }}
           >
             {percentile !== null ? `Top ${percentile}% of your runs` : 'Your first run!'}
@@ -199,7 +199,7 @@ const GameOver = () => {
 
           {/* Milestone ladder */}
           <div
-            className="relative mb-3 w-full animate-fade-in"
+            className="relative mb-2 w-full animate-fade-in"
             style={{ animationDelay: '1250ms', animationFillMode: 'both', opacity: 0 }}
           >
             {/* Background gradient line */}
@@ -254,7 +254,7 @@ const GameOver = () => {
 
           {/* Distance to next */}
           <div
-            className="mb-8 text-sm text-muted-foreground animate-fade-in"
+            className="mb-4 text-sm text-muted-foreground animate-fade-in"
             style={{ animationDelay: '1350ms', animationFillMode: 'both', opacity: 0 }}
           >
             {nextTier
@@ -264,7 +264,7 @@ const GameOver = () => {
 
           {/* Stat row */}
           <div
-            className="mb-10 flex items-center gap-6 text-base animate-fade-in"
+            className="mb-6 flex items-center gap-6 text-sm animate-fade-in"
             style={{ animationDelay: '1450ms', animationFillMode: 'both', opacity: 0 }}
           >
             <span className="text-foreground">
@@ -292,11 +292,9 @@ const GameOver = () => {
             className="flex items-center gap-4 animate-fade-in"
             style={{ animationDelay: '1600ms', animationFillMode: 'both', opacity: 0 }}
           >
-            <div className="rounded-md shadow-[0_0_0_0_hsl(var(--primary)/0.5)] animate-pulse">
-              <TVButton ref={playAgainRef} size="large" onClick={() => navigate('/')}>
-                Play Again
-              </TVButton>
-            </div>
+            <TVButton ref={playAgainRef} size="large" onClick={() => navigate('/')}>
+              Play Again
+            </TVButton>
             <TVButton variant="secondary" size="large" onClick={() => navigate('/')}>
               Home
             </TVButton>
