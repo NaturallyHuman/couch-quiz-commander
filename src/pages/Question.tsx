@@ -246,6 +246,7 @@ const Question = () => {
     setHighlightedAnswer(null);
     setSelectedAnswer(null);
     setFeedbackState(null);
+    setScorePopup(null);
   };
 
   useEffect(() => {
