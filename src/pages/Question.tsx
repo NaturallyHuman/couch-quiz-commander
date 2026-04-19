@@ -127,11 +127,13 @@ const Question = () => {
     audioManager.stopTrack('question', 600);
 
     const currentPlayer = gameState.players[gameState.currentPlayer];
-    currentPlayer.totalScore += score;
+    const roundDelta = score - roundStartScoreRef.current;
+    currentPlayer.totalScore += roundDelta;
     currentPlayer.correctAnswers += correctCount;
     currentPlayer.totalQuestions += attemptedCount;
     currentPlayer.maxStreak = Math.max(currentPlayer.maxStreak, maxStreak);
-    currentPlayer.roundScores.push(score);
+    currentPlayer.roundScores.push(roundDelta);
+    currentPlayer.streakBonusTotal = (currentPlayer.streakBonusTotal || 0) + streakBonus;
 
     // Merge category aggregates onto the player.
     const mergedCorrect = { ...(currentPlayer.correctByCategory || {}) };
