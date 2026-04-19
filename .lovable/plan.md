@@ -1,27 +1,57 @@
 
-The top/bottom answers ("German proposal for Mexico to attack the US") wrap awkwardly because they're constrained to the center column (140px wide) of the D-pad grid. Left/right answers don't have this issue.
+Restructure `src/pages/GameOver.tsx` to match the reference layout: big "Final Score" label + number at top, tier name centered in mid-upper area, and a 3-column stat row at the bottom (Best streak / Best category / Worst category). Use theme colors and clear visual hierarchy — no confetti dots, no tier ladder, no percentile, no "pts to next tier".
 
-## Fix in `src/pages/Question.tsx`
+## Layout (mirrors uploaded reference)
 
-**1. Let top/bottom answers span beyond the center column**
-Currently the top (A) and bottom (C) answer cells are placed at `col-start-2` (the narrow 140px D-pad column). Move them to span all three columns so they can use the full row width:
-- Top (A): `col-start-1 col-span-3` instead of `col-start-2`
-- Bottom (C): `col-start-1 col-span-3` instead of `col-start-2`
+```text
+                 Final Score          ← label, muted, small
+                   2,400              ← huge primary, tabular
 
-This lets the text breathe horizontally and stay on a single line in most cases.
+                Quick Thinker!        ← tier name, accent color
 
-**2. Prevent unnecessary wrapping on all answers**
-On the four AnswerChoice wrappers, swap `text-center`/`text-left`/`text-right` divs to allow inline behavior, and apply `whitespace-nowrap` to the button text in `src/components/AnswerChoice.tsx` only when text fits — but since some answers genuinely are long, use a softer approach:
-- Add `whitespace-nowrap` to `AnswerChoice` button by default so short/medium text stays on one line.
-- For very long answers that truly exceed available width, allow wrap by using `whitespace-nowrap` only at a min character threshold won't work cleanly in pure CSS. Simpler: keep `whitespace-nowrap` always — if text overflows the grid cell, it'll just push, but with the wider top/bottom row from change #1 this should rarely happen.
+   Best streak     Best category     Worst category    ← labels muted
+       8              History            Science       ← values, bold
+   2300 points!        9/9                3/9          ← sub-line muted
 
-Refined approach: use `whitespace-normal` (default) but increase available width via #1, AND set `min-width: 0` isn't needed. The real fix is just #1 — giving top/bottom enough horizontal space. Adding `whitespace-nowrap` is a belt-and-suspenders for short answers.
+              [ Play Again ]  [ Home ]
+```
 
-**3. Keep grid alignment intact**
-The center D-pad cell stays at `col-start-2 row-start-2`. Left/right answers stay in their columns. Only the top/bottom cells expand to span all 3 columns, but they remain visually centered (text-center) so they read as flanking the D-pad vertically.
+## Changes in `src/pages/GameOver.tsx`
+
+**1. Replace top section**
+- Drop celebration glow + confetti dots (cleaner, matches reference).
+- Keep "QUIZ COMPLETE" eyebrow (small, muted, tracked) — adds hierarchy without clutter.
+- "Final Score" label (text-lg, muted-foreground, font-medium).
+- Score number: text-8xl, font-bold, tabular-nums, `text-primary`, `animate-scale-in`.
+
+**2. Tier name (mid section)**
+- Centered, text-4xl, font-bold, `text-success` (or `text-primary` — pick `text-success` for color contrast vs the score). Add "!" suffix to match reference energy ("Quick Thinker!").
+- Margin top/bottom generous (~mb-16) to give the breathing room shown in the reference.
+
+**3. Three-column stat row**
+Replace the inline horizontal stats + tier ladder with a clean 3-col grid:
+- **Best streak** → value: `player.maxStreak`, sub-line: `${maxStreak * 100} points!` (approximation — or compute actual streak bonus if available). Looking at PlayerStats, there's no per-streak bonus total stored; simplest: show "{maxStreak * STREAK_BONUS_PER} points!" using the same constant as scoring, OR just "best run!" sub-line. **Decision**: use `${player.maxStreak * 100} points!` as a readable approximation matching reference's "2300 points!" vibe. (If exact value is preferred, we can wire `streakBonusTotal` through GameState later.)
+- **Best category** → value: existing `getBestCategory(player)` result, sub-line: `${correct}/${attempted}` from `correctByCategory` / `attemptedByCategory`.
+- **Worst category** → new helper `getWorstCategory(player)` mirroring `getBestCategory` but picking lowest accuracy (min 2 attempts). Sub-line: `${correct}/${attempted}`.
+
+Each column: muted label on top, large bold value middle (text-2xl, with best=success, worst=destructive for color coding), muted sub-line below.
+
+**4. Action buttons**
+- Keep `Play Again` (primary) + `Home` (secondary), centered at bottom with mt-12. Keep D-pad focus on Play Again.
+
+**5. Remove**
+- TIERS ladder rendering (keep `TIERS` array + `getTierIndex` for the tier name only).
+- Percentile line + recentScores tracking display (keep the recording call to `recordGameScore` so lifetime stats still update — just don't show percentile).
+- Confetti dots + celebration glow divs.
+- "pts to next tier" line.
+
+## Theme color usage
+- Score number: `text-primary`
+- Tier name: `text-success`
+- Best stat values: `text-foreground` with best category in `text-success`
+- Worst category value: `text-destructive`
+- All labels and sub-lines: `text-muted-foreground`
+- Buttons keep existing TVButton variants
 
 ## Files touched
-- `src/pages/Question.tsx` — change `col-start-2` → `col-start-1 col-span-3` on top (row-start-1) and bottom (row-start-3) answer cells.
-- `src/components/AnswerChoice.tsx` — add `whitespace-nowrap` to the button so short answers don't wrap when they don't need to. Long answers will still flow naturally because the wider span gives them room.
-
-No logic changes. No layout regressions for left/right answers.
+- `src/pages/GameOver.tsx` — full layout rewrite per above. No new files, no scoring logic changes, no type changes.
