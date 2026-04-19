@@ -50,6 +50,26 @@ const Question = () => {
   const lastWasWrongRef = useRef(false);
   const roundStartScoreRef = useRef(0);
 
+  // Live mirrors of state so handleRoundEnd (called from a stale-closure interval)
+  // always reads current values.
+  const scoreRef = useRef(0);
+  const correctCountRef = useRef(0);
+  const attemptedCountRef = useRef(0);
+  const maxStreakRef = useRef(0);
+  const streakBonusRef = useRef(0);
+  const correctByCategoryRef = useRef<{ [key: string]: number }>({});
+  const attemptedByCategoryRef = useRef<{ [key: string]: number }>({});
+  const currentIndexRef = useRef(0);
+
+  useEffect(() => { scoreRef.current = score; }, [score]);
+  useEffect(() => { correctCountRef.current = correctCount; }, [correctCount]);
+  useEffect(() => { attemptedCountRef.current = attemptedCount; }, [attemptedCount]);
+  useEffect(() => { maxStreakRef.current = maxStreak; }, [maxStreak]);
+  useEffect(() => { streakBonusRef.current = streakBonus; }, [streakBonus]);
+  useEffect(() => { correctByCategoryRef.current = correctByCategory; }, [correctByCategory]);
+  useEffect(() => { attemptedByCategoryRef.current = attemptedByCategory; }, [attemptedByCategory]);
+  useEffect(() => { currentIndexRef.current = currentIndex; }, [currentIndex]);
+
   useEffect(() => {
     if (!gameState) {
       navigate('/');
@@ -114,7 +134,6 @@ const Question = () => {
       setTimeRemaining((prev) => {
         if (prev <= 1) {
           if (timerRef.current) clearInterval(timerRef.current);
-          handleRoundEnd();
           return 0;
         }
         return prev - 1;
@@ -125,6 +144,13 @@ const Question = () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
   }, [questions.length, showPauseDialog]);
+
+  // When the timer hits zero, end the round (in an effect, not inside a setState updater).
+  useEffect(() => {
+    if (timeRemaining === 0 && questions.length > 0 && !roundEndedRef.current) {
+      handleRoundEnd();
+    }
+  }, [timeRemaining, questions.length]);
 
   const handleRoundEnd = () => {
     if (roundEndedRef.current) return;
@@ -137,23 +163,23 @@ const Question = () => {
     audioManager.stopTrack('question', 600);
 
     const currentPlayer = gameState.players[gameState.currentPlayer];
-    const roundDelta = score - roundStartScoreRef.current;
+    const roundDelta = scoreRef.current - roundStartScoreRef.current;
     currentPlayer.totalScore += roundDelta;
-    currentPlayer.correctAnswers += correctCount;
-    currentPlayer.totalQuestions += attemptedCount;
-    currentPlayer.maxStreak = Math.max(currentPlayer.maxStreak, maxStreak);
+    currentPlayer.correctAnswers += correctCountRef.current;
+    currentPlayer.totalQuestions += attemptedCountRef.current;
+    currentPlayer.maxStreak = Math.max(currentPlayer.maxStreak, maxStreakRef.current);
     currentPlayer.roundScores.push(roundDelta);
-    currentPlayer.streakBonusTotal = (currentPlayer.streakBonusTotal || 0) + streakBonus;
+    currentPlayer.streakBonusTotal = (currentPlayer.streakBonusTotal || 0) + streakBonusRef.current;
 
     // Merge category aggregates onto the player.
     const mergedCorrect = { ...(currentPlayer.correctByCategory || {}) };
-    Object.entries(correctByCategory).forEach(([k, v]) => {
+    Object.entries(correctByCategoryRef.current).forEach(([k, v]) => {
       mergedCorrect[k] = (mergedCorrect[k] || 0) + v;
     });
     currentPlayer.correctByCategory = mergedCorrect;
 
     const mergedAttempted = { ...(currentPlayer.attemptedByCategory || {}) };
-    Object.entries(attemptedByCategory).forEach(([k, v]) => {
+    Object.entries(attemptedByCategoryRef.current).forEach(([k, v]) => {
       mergedAttempted[k] = (mergedAttempted[k] || 0) + v;
     });
     currentPlayer.attemptedByCategory = mergedAttempted;
@@ -162,7 +188,7 @@ const Question = () => {
 
     const usedIds = [
       ...(gameState.usedQuestionIds || []),
-      ...questions.slice(0, currentIndex + 1).map((q) => q.id),
+      ...questions.slice(0, currentIndexRef.current + 1).map((q) => q.id),
     ];
 
     let nextPlayer = gameState.currentPlayer;
