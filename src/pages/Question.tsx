@@ -50,6 +50,26 @@ const Question = () => {
   const lastWasWrongRef = useRef(false);
   const roundStartScoreRef = useRef(0);
 
+  // Live mirrors of state so handleRoundEnd (called from a stale-closure interval)
+  // always reads current values.
+  const scoreRef = useRef(0);
+  const correctCountRef = useRef(0);
+  const attemptedCountRef = useRef(0);
+  const maxStreakRef = useRef(0);
+  const streakBonusRef = useRef(0);
+  const correctByCategoryRef = useRef<{ [key: string]: number }>({});
+  const attemptedByCategoryRef = useRef<{ [key: string]: number }>({});
+  const currentIndexRef = useRef(0);
+
+  useEffect(() => { scoreRef.current = score; }, [score]);
+  useEffect(() => { correctCountRef.current = correctCount; }, [correctCount]);
+  useEffect(() => { attemptedCountRef.current = attemptedCount; }, [attemptedCount]);
+  useEffect(() => { maxStreakRef.current = maxStreak; }, [maxStreak]);
+  useEffect(() => { streakBonusRef.current = streakBonus; }, [streakBonus]);
+  useEffect(() => { correctByCategoryRef.current = correctByCategory; }, [correctByCategory]);
+  useEffect(() => { attemptedByCategoryRef.current = attemptedByCategory; }, [attemptedByCategory]);
+  useEffect(() => { currentIndexRef.current = currentIndex; }, [currentIndex]);
+
   useEffect(() => {
     if (!gameState) {
       navigate('/');
