@@ -132,11 +132,11 @@ const GameOver = () => {
   }
 
   return (
-    <div className="relative flex h-full w-full flex-col items-center justify-center overflow-hidden px-[5%] py-[3%]">
+    <div className="relative flex h-full w-full flex-col items-center justify-center overflow-hidden px-[3%] py-[2%]">
       {/* Celebration glow */}
       <div
         aria-hidden
-        className="pointer-events-none absolute left-1/2 top-1/3 h-[600px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-60 blur-3xl animate-fade-in"
+        className="pointer-events-none absolute left-1/2 top-1/3 h-[400px] w-[400px] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-60 blur-3xl animate-fade-in"
         style={{
           background:
             'radial-gradient(circle, hsl(var(--primary) / 0.35) 0%, transparent 70%)',
