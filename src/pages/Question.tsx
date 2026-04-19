@@ -101,7 +101,7 @@ const Question = () => {
       setTimeRemaining((prev) => {
         if (prev <= 1) {
           if (timerRef.current) clearInterval(timerRef.current);
-          setTimeout(() => handleRoundEnd(), 0);
+          handleRoundEnd();
           return 0;
         }
         return prev - 1;
@@ -123,34 +123,27 @@ const Question = () => {
 
     audioManager.stopTrack('question', 600);
 
-    const currentPlayerIdx = gameState.currentPlayer;
-    const currentPlayer = gameState.players[currentPlayerIdx];
+    const currentPlayer = gameState.players[gameState.currentPlayer];
+    currentPlayer.totalScore += score;
+    currentPlayer.correctAnswers += correctCount;
+    currentPlayer.totalQuestions += attemptedCount;
+    currentPlayer.maxStreak = Math.max(currentPlayer.maxStreak, maxStreak);
+    currentPlayer.roundScores.push(score);
 
-    // Merge category aggregates immutably.
+    // Merge category aggregates onto the player.
     const mergedCorrect = { ...(currentPlayer.correctByCategory || {}) };
     Object.entries(correctByCategory).forEach(([k, v]) => {
       mergedCorrect[k] = (mergedCorrect[k] || 0) + v;
     });
+    currentPlayer.correctByCategory = mergedCorrect;
+
     const mergedAttempted = { ...(currentPlayer.attemptedByCategory || {}) };
     Object.entries(attemptedByCategory).forEach(([k, v]) => {
       mergedAttempted[k] = (mergedAttempted[k] || 0) + v;
     });
+    currentPlayer.attemptedByCategory = mergedAttempted;
 
-    const updatedPlayer = {
-      ...currentPlayer,
-      totalScore: currentPlayer.totalScore + score,
-      correctAnswers: currentPlayer.correctAnswers + correctCount,
-      totalQuestions: currentPlayer.totalQuestions + attemptedCount,
-      maxStreak: Math.max(currentPlayer.maxStreak, maxStreak),
-      roundScores: [...currentPlayer.roundScores, score],
-      correctByCategory: mergedCorrect,
-      attemptedByCategory: mergedAttempted,
-      endedOnWrong: lastWasWrongRef.current,
-    };
-
-    const updatedPlayers = gameState.players.map((p, i) =>
-      i === currentPlayerIdx ? updatedPlayer : p
-    );
+    currentPlayer.endedOnWrong = lastWasWrongRef.current;
 
     const usedIds = [
       ...(gameState.usedQuestionIds || []),
@@ -168,7 +161,7 @@ const Question = () => {
 
     const updatedGameState: GameState = {
       ...gameState,
-      players: updatedPlayers,
+      players: [...gameState.players],
       currentRound: nextRound,
       currentPlayer: nextPlayer,
       currentRoundScore: 0,
@@ -415,8 +408,8 @@ const Question = () => {
                 </div>
                 {/* Center badge with bonus count */}
                 <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-                  <div className="relative grid h-14 min-w-20 place-items-center rounded-full bg-card px-3 text-xl font-bold tabular-nums text-foreground">
-                    {streak}
+                  <div className="relative grid h-14 min-w-20 place-items-center rounded-full border-2 border-primary/60 bg-card px-3 text-xl font-bold tabular-nums text-foreground shadow-[0_0_18px_hsl(var(--primary)/0.35)]">
+                    {streakBonus.toLocaleString()}
                     {scorePopup && (
                       <span
                         key={scorePopup.key}
