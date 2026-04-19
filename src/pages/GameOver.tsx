@@ -199,7 +199,7 @@ const GameOver = () => {
 
           {/* Milestone ladder */}
           <div
-            className="relative mb-3 w-full animate-fade-in"
+            className="relative mb-2 w-full animate-fade-in"
             style={{ animationDelay: '1250ms', animationFillMode: 'both', opacity: 0 }}
           >
             {/* Background gradient line */}
