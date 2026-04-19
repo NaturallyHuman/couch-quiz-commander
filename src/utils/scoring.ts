@@ -1,12 +1,26 @@
 export const BASE_SCORE = 100;
-export const MAX_TIMER_BONUS = 50;
-export const STREAK_MULTIPLIER = 50;
 export const MIN_STREAK_FOR_BONUS = 3;
+
+// Escalating streak bonus schedule. Bonus is awarded on the answer that
+// brings the streak to N. Caps at 7+ to keep numbers sane.
+const STREAK_BONUS_SCHEDULE: { [streak: number]: number } = {
+  3: 50,
+  4: 100,
+  5: 200,
+  6: 400,
+};
+const STREAK_BONUS_CAP = 800; // for streak >= 7
+
+export const getStreakBonus = (streak: number): number => {
+  if (streak < MIN_STREAK_FOR_BONUS) return 0;
+  if (streak >= 7) return STREAK_BONUS_CAP;
+  return STREAK_BONUS_SCHEDULE[streak] ?? 0;
+};
 
 export const calculateScore = (
   isCorrect: boolean,
-  timeRemaining: number,
-  maxTime: number,
+  _timeRemaining: number,
+  _maxTime: number,
   currentStreak: number
 ): { points: number; breakdown: { base: number; timer: number; streak: number } } => {
   if (!isCorrect) {
@@ -14,13 +28,10 @@ export const calculateScore = (
   }
 
   const base = BASE_SCORE;
-  const timerBonus = Math.round((timeRemaining / maxTime) * MAX_TIMER_BONUS);
-  const streakBonus = currentStreak >= MIN_STREAK_FOR_BONUS 
-    ? currentStreak * STREAK_MULTIPLIER 
-    : 0;
+  const streakBonus = getStreakBonus(currentStreak);
 
   return {
-    points: base + timerBonus + streakBonus,
-    breakdown: { base, timer: timerBonus, streak: streakBonus }
+    points: base + streakBonus,
+    breakdown: { base, timer: 0, streak: streakBonus },
   };
 };
