@@ -47,6 +47,7 @@ const Question = () => {
   const incorrectSoundRef = useRef<HTMLAudioElement | null>(null);
   const roundEndedRef = useRef(false);
   const lastWasWrongRef = useRef(false);
+  const roundStartScoreRef = useRef(0);
 
   useEffect(() => {
     if (!gameState) {
