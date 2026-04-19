@@ -64,7 +64,9 @@ const Question = () => {
           gameState.usedQuestionIds || []
         );
         setQuestions(selected);
-        setScore(gameState.currentRoundScore);
+        const baseTotal = (gameState.players[gameState.currentPlayer]?.totalScore || 0);
+        roundStartScoreRef.current = baseTotal + gameState.currentRoundScore;
+        setScore(baseTotal + gameState.currentRoundScore);
         setStreak(gameState.currentStreak);
         setMaxStreak(gameState.currentMaxStreak);
         setCorrectCount(gameState.currentRoundCorrect);
